@@ -19,6 +19,7 @@ jobs:
           server: ${{ git_ftp_server }}
           username: ${{ git_ftp_username }}
           password: ${{ git_ftp_password }}
+          protocol: 'ftps'
           local-dir: './build'
           remote-dir: '/'
           sync-options: '--delete --verbose'
