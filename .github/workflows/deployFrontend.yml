@@ -16,9 +16,9 @@ jobs:
         run:   npm run build
         uses: ./
         with:
-          server: ${{ secrets.git_ftp_server }}
-          username: ${{ secrets.ftp_username }}
-          password: ${{ secrets.ftp_password }}
+          server: ${{ git_ftp_server }}
+          username: ${{ git_ftp_username }}
+          password: ${{ git_ftp_password }}
           local-dir: './build'
           remote-dir: '/'
           sync-options: '--delete --verbose'
