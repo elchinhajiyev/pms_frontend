@@ -101,14 +101,6 @@ export default function MyEvaluations() {
     return Object.entries(groupedEvaluations).sort(([a], [b]) => a.localeCompare(b, "az"));
   }, [groupedEvaluations]);
 
-  const sortedEvaluations = useMemo(() => {
-    return [...evaluations].sort((a, b) => {
-      const left = new Date(a.submitted_at || a.created_at || 0).getTime();
-      const right = new Date(b.submitted_at || b.created_at || 0).getTime();
-      return right - left;
-    });
-  }, [evaluations]);
-
   return (
     <>
       <PageMeta title="Qiymətləndirilən tapşırıqlar | Performix" description="" />
@@ -236,8 +228,8 @@ export default function MyEvaluations() {
             <div className="space-y-4 p-4 md:p-6">
               {groupedEvaluationEntries.map(([taskName, taskEvaluations]) => {
                 const taskItems = [...taskEvaluations].sort((a, b) => {
-                  const left = new Date(a.submitted_at || a.created_at || 0).getTime();
-                  const right = new Date(b.submitted_at || b.created_at || 0).getTime();
+                  const left = new Date(a.submitted_at || a.approved_at || 0).getTime();
+                  const right = new Date(b.submitted_at || b.approved_at || 0).getTime();
                   return right - left;
                 });
 
