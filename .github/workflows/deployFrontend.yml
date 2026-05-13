@@ -33,5 +33,5 @@ jobs:
           password: ${{ secrets.GIT_FTP_PASSWORD }}
           protocol: 'ftps'
           local-dir: './dist/'
-          server-dir: /home/seftcons/pms.seftcons.com/
+          
     
