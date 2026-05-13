@@ -32,6 +32,6 @@ jobs:
           username: ${{ secrets.GIT_FTP_USERNAME }}
           password: ${{ secrets.GIT_FTP_PASSWORD }}
           protocol: 'ftps'
-          local-dir: './dist'
+          local-dir: './dist/'
           server-dir: /pms.seftcons.com/
     
