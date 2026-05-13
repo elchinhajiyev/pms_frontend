@@ -22,14 +22,13 @@ jobs:
         run: |
           npm install
           npm run build
-        uses: ./
 
       - name: 🚀 Deploy to FTP Server
         uses: SamKirkland/FTP-Deploy-Action@4.0.0
         with:
-          server: ${{ GIT_FTP_SERVER }}
-          username: ${{ GIT_FTP_USERNAME }}
-          password: ${{ GIT_FTP_PASSWORD }}
+          server: ${{ secrets.GIT_FTP_SERVER }}
+          username: ${{ secrets.GIT_FTP_USERNAME }}
+          password: ${{ secrets.GIT_FTP_PASSWORD }}
           protocol: 'ftps'
           local-dir: './build'
           remote-dir: '/'
