@@ -2,7 +2,7 @@ name: Deploy to FTP Server
 
 on:
   push:
-    branches: [master]
+    branches: main
 
 jobs:
   deploy:
@@ -12,9 +12,20 @@ jobs:
       - name: 🚚 Get latest code
         uses: actions/checkout@v4
 
-      - name: 📂 Sync files
-        run:   npm run build
+      - name: 🚚 Use node js 16.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+
+
+      - name: 📂 Build website
+        run: |
+          npm install
+          npm run build
         uses: ./
+
+      - name: 🚀 Deploy to FTP Server
+        uses: SamKirkland/FTP-Deploy-Action@4.0.0
         with:
           server: ${{ git_ftp_server }}
           username: ${{ git_ftp_username }}
