@@ -6,7 +6,7 @@ export default function SignIn() {
   return (
     <>
       <PageMeta
-        title="Performix çıxış Səhifəsi"
+        title="Performix giriş səhifəsi"
         description="Performix platformasına daxil olun"
       />
       <AuthLayout>
