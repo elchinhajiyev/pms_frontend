@@ -10,12 +10,11 @@ export const isLocalhost = Boolean(
 
 export const API_URL = isLocalhost
   ? 'http://localhost:5551/api/'
-  : 'https://pms.seftcons.com/api/'
+  : 'https://pms-api.seftcons.com/api/'
 
 export const ATTACHMENT_URL = isLocalhost
   ? 'http://localhost:5551'
-  : 'https://pms.seftcons.com'
-
+  : 'https://pms-api.seftcons.com'
 export const Axios = axios.create({
   baseURL: API_URL
 })
