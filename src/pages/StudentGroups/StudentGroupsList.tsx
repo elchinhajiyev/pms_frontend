@@ -56,6 +56,10 @@ export default function StudentGroupsList() {
   const [departmentListSearch, setDepartmentListSearch] = useState("");
 
   const normalizeData = (res: any) => (Array.isArray(res?.data) ? res.data : []);
+  const isKafedraDepartment = (department: Department) =>
+    (department.categories || []).some(
+      (category) => category.name.trim().toLowerCase() === "kafedra"
+    );
 
   const loadAll = async () => {
     try {
@@ -82,7 +86,7 @@ export default function StudentGroupsList() {
       setFaculties(normalizeData(facultiesRes));
       setSubjects(normalizeData(subjectsRes));
       setSpecialties(normalizeData(specialtiesRes));
-      setDepartments(normalizeData(departmentsRes));
+      setDepartments((normalizeData(departmentsRes) as Department[]).filter(isKafedraDepartment));
 
       const usersData = normalizeData(usersRes) as User[];
       const teacherUsers = usersData.filter((user) => {
