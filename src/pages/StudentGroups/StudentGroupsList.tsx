@@ -333,7 +333,14 @@ export default function StudentGroupsList() {
               <tbody>
                 {filteredGroups.map((group) => (
                   <tr key={group.id} className="border-b border-gray-100 dark:border-gray-700">
-                    <td className="py-3 pr-4 font-medium text-gray-800 dark:text-white">{group.group_number}</td>
+                    <td className="py-3 pr-4 font-medium text-gray-800 dark:text-white">
+                      <div className="flex items-center gap-2">
+                        <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                          ID {group.id}
+                        </span>
+                        <span>{group.group_number}</span>
+                      </div>
+                    </td>
                     <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{group.course ?? "-"}</td>
                     <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">
                       {group.education_type === "EYANI"
