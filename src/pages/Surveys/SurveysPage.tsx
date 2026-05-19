@@ -10,6 +10,25 @@ import { useHelperToolOptions } from "../../hooks/useHelperToolOptions";
 
 const ROWS_PER_PAGE = 20;
 
+const isTeacherGroup = (group: EmployeeGroup) => {
+  const values = [group.code, group.name, group.name_en]
+    .filter(Boolean)
+    .map((value) => String(value).toLowerCase());
+
+  return values.some(
+    (value) =>
+      value.includes("teacher") ||
+      value.includes("education") ||
+      value.includes("teaching") ||
+      value.includes("müəllim") ||
+      value.includes("muellim") ||
+      value.includes("təlim") ||
+      value.includes("telim") ||
+      value.includes("tədris") ||
+      value.includes("tedris")
+  );
+};
+
 const SurveysPage: React.FC = () => {
   const { academicYears, semesters } = useHelperToolOptions();
   const [records, setRecords] = useState<Survey[]>([]);
@@ -298,6 +317,8 @@ const SurveysPage: React.FC = () => {
     });
   }, [records, searchQuery, filterYear, filterSemester, filterGroupId]);
 
+  const teacherGroups = useMemo(() => groups.filter(isTeacherGroup), [groups]);
+
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, filterYear, filterSemester, filterGroupId, records.length]);
@@ -565,12 +586,17 @@ const SurveysPage: React.FC = () => {
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
                   >
                     <option value="">Seçin</option>
-                    {groups.map((group) => (
+                    {teacherGroups.map((group) => (
                       <option key={group.id} value={group.id}>
                         {group.name} ({group.code})
                       </option>
                     ))}
                   </select>
+                  {teacherGroups.length === 0 && (
+                    <p className="mt-1 text-xs text-red-600 dark:text-red-300">
+                      Müəllim işçi qrupu tapılmadı.
+                    </p>
+                  )}
                 </div>
 
                 <div>
