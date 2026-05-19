@@ -33,6 +33,9 @@ export interface GroupMember {
   position_id?: number
   department_id?: number
   employee_group_id?: number
+  access_role_id?: number
+  role_name?: string
+  role_code?: string
 }
 
 // ==================== SERVICES ====================
@@ -90,8 +93,9 @@ export const groupMemberService = {
     return response.data
   },
 
-  async getUsersWithoutGroup() {
-    const response = await api.get('/evaluation/users-without-group')
+  async getUsersWithoutGroup(accessRoleId?: number) {
+    const params = accessRoleId ? `?access_role_id=${accessRoleId}` : ''
+    const response = await api.get(`/evaluation/users-without-group${params}`)
     return response.data
   },
 
