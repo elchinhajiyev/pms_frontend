@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
-import MultiSelect from "../../components/ui/MultiSelect";
 import { groupMemberService, GroupMember } from "../../services/activityService";
 import { employeeGroupService, EmployeeGroup } from "../../services/evaluationService";
 import accessRoleService, { AccessRole } from "../../services/accessRoleService";
@@ -33,6 +32,7 @@ export default function GroupMembers() {
   const [error, setError] = useState("");
   const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
   const [selectedRoleId, setSelectedRoleId] = useState("");
+  const [userSearch, setUserSearch] = useState("");
   const [adding, setAdding] = useState(false);
 
   const loadAll = async () => {
@@ -49,6 +49,7 @@ export default function GroupMembers() {
       setRoles((rolesRes.data?.data || []).filter((role: AccessRole) => !isStudentRole(role)));
       setUnassigned([]);
       setSelectedUserIds([]);
+      setUserSearch("");
     } catch {
       setError("Məlumatlar yüklənmədi");
     } finally {
@@ -63,6 +64,7 @@ export default function GroupMembers() {
   useEffect(() => {
     const loadUsersByRole = async () => {
       setSelectedUserIds([]);
+      setUserSearch("");
 
       if (!selectedRoleId) {
         setUnassigned([]);
@@ -125,10 +127,46 @@ export default function GroupMembers() {
     }
   };
 
-  const multiSelectOptions = unassigned.map((u) => ({
-    id: u.id,
-    label: `${u.last_name} ${u.first_name}${u.email ? ` (${u.email})` : ""}${u.role_name ? ` — ${u.role_name}` : ""}`,
-  }));
+  const filteredUnassigned = unassigned.filter((user) => {
+    const haystack = [
+      user.last_name,
+      user.first_name,
+      user.middle_name,
+      user.email,
+      user.fin,
+      user.role_name,
+      user.role_code,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    return haystack.includes(userSearch.trim().toLowerCase());
+  });
+
+  const toggleUser = (userId: number) => {
+    setSelectedUserIds((prev) =>
+      prev.includes(userId)
+        ? prev.filter((id) => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  const toggleAllFilteredUsers = () => {
+    const filteredIds = filteredUnassigned.map((user) => user.id);
+    const allFilteredSelected =
+      filteredIds.length > 0 &&
+      filteredIds.every((userId) => selectedUserIds.includes(userId));
+
+    if (allFilteredSelected) {
+      setSelectedUserIds((prev) =>
+        prev.filter((userId) => !filteredIds.includes(userId))
+      );
+      return;
+    }
+
+    setSelectedUserIds((prev) => Array.from(new Set([...prev, ...filteredIds])));
+  };
 
   return (
     <>
@@ -204,27 +242,86 @@ export default function GroupMembers() {
                   </p>
                 ) : (
                   <>
-                  <MultiSelect
-                    options={multiSelectOptions}
-                    selected={selectedUserIds}
-                    onChange={setSelectedUserIds}
-                    placeholder="İstifadəçilər seçin (ada görə axtarış edə bilərsiniz)..."
-                    disabled={adding}
-                  />
-                  <button
-                    onClick={handleAddMultiple}
-                    disabled={selectedUserIds.length === 0 || adding}
-                    className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-60"
-                  >
-                    {adding
-                      ? `Əlavə edilir (${selectedUserIds.length})...`
-                      : `Əlavə et (${selectedUserIds.length})`}
-                  </button>
-                  {selectedUserIds.length > 0 && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {selectedUserIds.length} istifadəçi seçildi
-                    </p>
-                  )}
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Ada görə axtar
+                      </label>
+                      <input
+                        type="text"
+                        value={userSearch}
+                        onChange={(e) => setUserSearch(e.target.value)}
+                        disabled={adding}
+                        placeholder="Ad, soyad, e-poçt və ya FİN yazın..."
+                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-500 disabled:bg-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:disabled:bg-gray-700"
+                      />
+                    </div>
+
+                    <div className="rounded-lg border border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center justify-between border-b border-gray-200 px-3 py-2 dark:border-gray-700">
+                        <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                          <input
+                            type="checkbox"
+                            checked={
+                              filteredUnassigned.length > 0 &&
+                              filteredUnassigned.every((user) =>
+                                selectedUserIds.includes(user.id)
+                              )
+                            }
+                            onChange={toggleAllFilteredUsers}
+                            disabled={adding || filteredUnassigned.length === 0}
+                            className="h-5 w-5"
+                          />
+                          Hamısını seç
+                        </label>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          Seçilən: {selectedUserIds.length}
+                        </span>
+                      </div>
+
+                      {filteredUnassigned.length === 0 ? (
+                        <p className="px-3 py-3 text-sm text-gray-500 dark:text-gray-400">
+                          Axtarışa uyğun istifadəçi tapılmadı.
+                        </p>
+                      ) : (
+                        <div className="max-h-72 overflow-y-auto p-3">
+                          {filteredUnassigned.map((user) => (
+                            <label
+                              key={user.id}
+                              className="flex cursor-pointer items-start gap-3 rounded px-2 py-2 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selectedUserIds.includes(user.id)}
+                                onChange={() => toggleUser(user.id)}
+                                disabled={adding}
+                                className="mt-0.5 h-5 w-5"
+                              />
+                              <span className="min-w-0 text-sm text-gray-800 dark:text-white">
+                                <span className="block font-medium">
+                                  {user.last_name} {user.first_name}
+                                  {user.middle_name ? ` ${user.middle_name}` : ""}
+                                </span>
+                                <span className="block text-xs text-gray-500 dark:text-gray-400">
+                                  {[user.email, user.fin, user.role_name]
+                                    .filter(Boolean)
+                                    .join(" | ") || "Əlavə məlumat yoxdur"}
+                                </span>
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <button
+                      onClick={handleAddMultiple}
+                      disabled={selectedUserIds.length === 0 || adding}
+                      className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-60"
+                    >
+                      {adding
+                        ? `Əlavə edilir (${selectedUserIds.length})...`
+                        : `Əlavə et (${selectedUserIds.length})`}
+                    </button>
                   </>
                 )}
               </div>
