@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { FiActivity, FiCheck, FiMenu, FiTrash2 } from "react-icons/fi";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
 import activityService, { Activity } from "../../services/activityService";
@@ -40,6 +41,9 @@ export default function SurveyQuestionBanksPage() {
   const [questions, setQuestions] = useState<QuestionFormRow[]>([
     createQuestionRow(),
   ]);
+  const [draggedQuestionId, setDraggedQuestionId] = useState<string | null>(null);
+  const [activityModalQuestionId, setActivityModalQuestionId] = useState<string | null>(null);
+  const [activitySearch, setActivitySearch] = useState("");
   const [formError, setFormError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -50,6 +54,27 @@ export default function SurveyQuestionBanksPage() {
         .sort((a, b) => a.name.localeCompare(b.name)),
     [activities]
   );
+
+  const filteredActivities = useMemo(() => {
+    const search = activitySearch.trim().toLowerCase();
+
+    if (!search) return sortedActivities;
+
+    return sortedActivities.filter((activity) =>
+      [activity.name, activity.code, activity.category]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(search))
+    );
+  }, [activitySearch, sortedActivities]);
+
+  const selectedActivityQuestion = useMemo(
+    () =>
+      questions.find((question) => question.id === activityModalQuestionId) || null,
+    [activityModalQuestionId, questions]
+  );
+
+  const getActivity = (activityId: string) =>
+    sortedActivities.find((activity) => String(activity.id) === activityId);
 
   const load = async () => {
     try {
@@ -77,6 +102,8 @@ export default function SurveyQuestionBanksPage() {
     setForm(emptyForm);
     setQuestions([createQuestionRow()]);
     setFormError("");
+    setActivityModalQuestionId(null);
+    setActivitySearch("");
     setShowModal(true);
   };
 
@@ -92,6 +119,8 @@ export default function SurveyQuestionBanksPage() {
         : [createQuestionRow()]
     );
     setFormError("");
+    setActivityModalQuestionId(null);
+    setActivitySearch("");
     setShowModal(true);
   };
 
@@ -118,19 +147,35 @@ export default function SurveyQuestionBanksPage() {
     );
   };
 
-  const moveQuestion = (rowId: string, direction: -1 | 1) => {
+  const reorderQuestion = (sourceId: string, targetId: string) => {
+    if (sourceId === targetId) return;
+
     setQuestions((current) => {
-      const index = current.findIndex((question) => question.id === rowId);
-      const targetIndex = index + direction;
-      if (index < 0 || targetIndex < 0 || targetIndex >= current.length) {
+      const sourceIndex = current.findIndex((question) => question.id === sourceId);
+      const targetIndex = current.findIndex((question) => question.id === targetId);
+
+      if (sourceIndex < 0 || targetIndex < 0) {
         return current;
       }
 
       const next = [...current];
-      const [item] = next.splice(index, 1);
+      const [item] = next.splice(sourceIndex, 1);
       next.splice(targetIndex, 0, item);
       return next;
     });
+  };
+
+  const openActivityModal = (questionId: string) => {
+    setActivityModalQuestionId(questionId);
+    setActivitySearch("");
+  };
+
+  const selectActivity = (activityId: string) => {
+    if (!activityModalQuestionId) return;
+
+    updateQuestion(activityModalQuestionId, { activity_id: activityId });
+    setActivityModalQuestionId(null);
+    setActivitySearch("");
   };
 
   const buildPayload = () => ({
@@ -366,86 +411,81 @@ export default function SurveyQuestionBanksPage() {
                 </button>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {questions.map((question, index) => (
                   <div
                     key={question.id}
-                    className="rounded-lg border border-gray-200 p-3 dark:border-gray-700"
+                    draggable
+                    onDragStart={() => setDraggedQuestionId(question.id)}
+                    onDragOver={(event) => event.preventDefault()}
+                    onDrop={() => {
+                      if (draggedQuestionId) reorderQuestion(draggedQuestionId, question.id);
+                      setDraggedQuestionId(null);
+                    }}
+                    onDragEnd={() => setDraggedQuestionId(null)}
+                    className={`flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-2 transition dark:border-gray-700 dark:bg-gray-800 ${
+                      draggedQuestionId === question.id ? "opacity-60" : ""
+                    }`}
                   >
-                    <div className="mb-2 flex items-center justify-between gap-3">
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Sual {index + 1}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => moveQuestion(question.id, -1)}
-                          disabled={index === 0}
-                          className="rounded border border-gray-300 px-2 py-1 text-xs text-gray-600 disabled:opacity-40 dark:border-gray-700 dark:text-gray-300"
-                        >
-                          Yuxarı
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => moveQuestion(question.id, 1)}
-                          disabled={index === questions.length - 1}
-                          className="rounded border border-gray-300 px-2 py-1 text-xs text-gray-600 disabled:opacity-40 dark:border-gray-700 dark:text-gray-300"
-                        >
-                          Aşağı
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => removeQuestion(question.id)}
-                          className="rounded border border-red-200 px-2 py-1 text-xs text-red-500 hover:bg-red-50 dark:border-red-900/60 dark:hover:bg-red-900/20"
-                        >
-                          Sil
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="grid gap-3 lg:grid-cols-[1fr_280px]">
-                      <textarea
-                        value={question.question_text}
+                    <span className="flex h-9 w-9 shrink-0 cursor-grab items-center justify-center rounded-lg text-gray-400 hover:bg-gray-50 hover:text-gray-600 active:cursor-grabbing dark:hover:bg-gray-700 dark:hover:text-gray-200">
+                      <FiMenu className="h-4 w-4" />
+                    </span>
+                    <span className="w-10 shrink-0 text-xs font-medium text-gray-500 dark:text-gray-400">
+                      #{index + 1}
+                    </span>
+                    <input
+                      type="text"
+                      value={question.question_text}
+                      onChange={(event) =>
+                        updateQuestion(question.id, {
+                          question_text: event.target.value,
+                        })
+                      }
+                      className="h-9 min-w-0 flex-1 rounded-lg border border-gray-300 px-3 text-sm outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                      placeholder="Sual mətnini yazın"
+                    />
+                    <label
+                      className="hidden shrink-0 items-center gap-2 text-xs text-gray-600 dark:text-gray-300 sm:flex"
+                      title="Cavab məcburidir"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={question.is_required}
                         onChange={(event) =>
                           updateQuestion(question.id, {
-                            question_text: event.target.value,
+                            is_required: event.target.checked,
                           })
                         }
-                        className="min-h-[86px] w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-                        placeholder="Sual mətnini yazın"
+                        className="h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500"
                       />
-                      <div className="space-y-3">
-                        <select
-                          value={question.activity_id}
-                          onChange={(event) =>
-                            updateQuestion(question.id, {
-                              activity_id: event.target.value,
-                            })
-                          }
-                          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-                        >
-                          <option value="">Fəaliyyət seçilməyib</option>
-                          {sortedActivities.map((activity) => (
-                            <option key={activity.id} value={activity.id}>
-                              {activity.name}
-                            </option>
-                          ))}
-                        </select>
-                        <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                          <input
-                            type="checkbox"
-                            checked={question.is_required}
-                            onChange={(event) =>
-                              updateQuestion(question.id, {
-                                is_required: event.target.checked,
-                              })
-                            }
-                            className="h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500"
-                          />
-                          Cavab məcburidir
-                        </label>
-                      </div>
-                    </div>
+                      Məcburi
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => openActivityModal(question.id)}
+                      title={
+                        question.activity_id
+                          ? getActivity(question.activity_id)?.name || "Fəaliyyət seçilib"
+                          : "Fəaliyyət əlavə et"
+                      }
+                      aria-label="Fəaliyyət əlavə et"
+                      className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border text-sm ${
+                        question.activity_id
+                          ? "border-brand-200 bg-brand-50 text-brand-600 dark:border-brand-500/40 dark:bg-brand-500/10 dark:text-brand-300"
+                          : "border-gray-300 text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700"
+                      }`}
+                    >
+                      <FiActivity className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeQuestion(question.id)}
+                      title="Sil"
+                      aria-label="Sualı sil"
+                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-red-200 text-red-500 hover:bg-red-50 dark:border-red-900/60 dark:hover:bg-red-900/20"
+                    >
+                      <FiTrash2 className="h-4 w-4" />
+                    </button>
                   </div>
                 ))}
               </div>
@@ -471,6 +511,77 @@ export default function SurveyQuestionBanksPage() {
               >
                 {saving ? "Saxlanılır..." : "Saxla"}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activityModalQuestionId && selectedActivityQuestion && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-2xl rounded-xl bg-white p-5 shadow-xl dark:bg-gray-800">
+            <div className="mb-4 flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                  Fəaliyyət seç
+                </h3>
+                <p className="mt-1 line-clamp-1 text-sm text-gray-500 dark:text-gray-400">
+                  {selectedActivityQuestion.question_text || "Sual mətni yazılmayıb"}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActivityModalQuestionId(null)}
+                className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+              >
+                Bağla
+              </button>
+            </div>
+
+            <input
+              type="text"
+              value={activitySearch}
+              onChange={(event) => setActivitySearch(event.target.value)}
+              className="mb-3 h-10 w-full rounded-lg border border-gray-300 px-3 text-sm outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+              placeholder="Fəaliyyət axtar"
+              autoFocus
+            />
+
+            <div className="max-h-80 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-700">
+              <button
+                type="button"
+                onClick={() => selectActivity("")}
+                className="flex w-full items-center justify-between border-b border-gray-100 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700"
+              >
+                <span>Fəaliyyət seçilməyib</span>
+                {!selectedActivityQuestion.activity_id && (
+                  <FiCheck className="h-4 w-4 text-brand-500" />
+                )}
+              </button>
+              {filteredActivities.map((activity) => (
+                <button
+                  key={activity.id}
+                  type="button"
+                  onClick={() => selectActivity(String(activity.id))}
+                  className="flex w-full items-center justify-between gap-3 border-b border-gray-100 px-3 py-2 text-left text-sm hover:bg-gray-50 last:border-b-0 dark:border-gray-700 dark:hover:bg-gray-700"
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate font-medium text-gray-800 dark:text-white">
+                      {activity.name}
+                    </span>
+                    <span className="block truncate text-xs text-gray-500 dark:text-gray-400">
+                      {[activity.code, activity.category].filter(Boolean).join(" • ") || "-"}
+                    </span>
+                  </span>
+                  {String(activity.id) === selectedActivityQuestion.activity_id && (
+                    <FiCheck className="h-4 w-4 shrink-0 text-brand-500" />
+                  )}
+                </button>
+              ))}
+              {filteredActivities.length === 0 && (
+                <p className="px-3 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                  Fəaliyyət tapılmadı.
+                </p>
+              )}
             </div>
           </div>
         </div>
