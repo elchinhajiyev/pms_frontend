@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { FiActivity, FiCheck, FiMenu, FiTrash2 } from "react-icons/fi";
+import { FiActivity, FiCheck, FiTrash2 } from "react-icons/fi";
+import { MdDragIndicator } from "react-icons/md";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
 import activityService, { Activity } from "../../services/activityService";
@@ -434,7 +435,7 @@ export default function SurveyQuestionBanksPage() {
                     }`}
                   >
                     <span className="flex h-9 w-9 shrink-0 cursor-grab items-center justify-center rounded-lg text-gray-400 hover:bg-gray-50 hover:text-gray-600 active:cursor-grabbing dark:hover:bg-gray-700 dark:hover:text-gray-200">
-                      <FiMenu className="h-4 w-4" />
+                      <MdDragIndicator className="h-5 w-5" />
                     </span>
                     <span className="w-10 shrink-0 text-xs font-medium text-gray-500 dark:text-gray-400">
                       #{index + 1}
@@ -563,26 +564,35 @@ export default function SurveyQuestionBanksPage() {
                   <FiCheck className="h-4 w-4 text-brand-500" />
                 )}
               </button>
-              {filteredActivities.map((activity) => (
-                <button
-                  key={activity.id}
-                  type="button"
-                  onClick={() => selectActivity(String(activity.id))}
-                  className="flex w-full items-center justify-between gap-3 border-b border-gray-100 px-3 py-2 text-left text-sm hover:bg-gray-50 last:border-b-0 dark:border-gray-700 dark:hover:bg-gray-700"
-                >
-                  <span className="min-w-0">
-                    <span className="block truncate font-medium text-gray-800 dark:text-white">
-                      {activity.name}
+              {filteredActivities.map((activity) => {
+                const isSelected =
+                  String(activity.id) === selectedActivityQuestion.activity_id;
+
+                return (
+                  <button
+                    key={activity.id}
+                    type="button"
+                    onClick={() => selectActivity(String(activity.id))}
+                    className={`flex w-full items-center justify-between gap-3 border-b border-gray-100 px-3 py-2 text-left text-sm last:border-b-0 dark:border-gray-700 ${
+                      isSelected
+                        ? "bg-brand-100 hover:bg-brand-100 dark:bg-brand-500/20 dark:hover:bg-brand-500/20"
+                        : "hover:bg-gray-50 dark:hover:bg-gray-700"
+                    }`}
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate font-medium text-gray-800 dark:text-white">
+                        {activity.name}
+                      </span>
+                      <span className="block truncate text-xs text-gray-500 dark:text-gray-400">
+                        {[activity.code, activity.category].filter(Boolean).join(" • ") || "-"}
+                      </span>
                     </span>
-                    <span className="block truncate text-xs text-gray-500 dark:text-gray-400">
-                      {[activity.code, activity.category].filter(Boolean).join(" • ") || "-"}
-                    </span>
-                  </span>
-                  {String(activity.id) === selectedActivityQuestion.activity_id && (
-                    <FiCheck className="h-4 w-4 shrink-0 text-brand-500" />
-                  )}
-                </button>
-              ))}
+                    {isSelected && (
+                      <FiCheck className="h-4 w-4 shrink-0 text-brand-500" />
+                    )}
+                  </button>
+                );
+              })}
               {filteredActivities.length === 0 && (
                 <p className="px-3 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                   Fəaliyyət tapılmadı.
