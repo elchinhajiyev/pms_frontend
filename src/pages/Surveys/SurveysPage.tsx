@@ -13,21 +13,6 @@ import { useHelperToolOptions } from "../../hooks/useHelperToolOptions";
 
 const ROWS_PER_PAGE = 20;
 
-const parseSurveyYear = (value: string | number | undefined | null) => {
-  const text = String(value || "").trim();
-  const directYear = Number(text);
-
-  if (Number.isFinite(directYear) && directYear > 0) {
-    return directYear;
-  }
-
-  const yearMatch = text.match(/\d{4}/);
-  if (!yearMatch) return NaN;
-
-  const parsedYear = Number(yearMatch[0]);
-  return Number.isFinite(parsedYear) && parsedYear > 0 ? parsedYear : NaN;
-};
-
 const isTeacherGroup = (group: EmployeeGroup) => {
   const values = [group.code, group.name, group.name_en]
     .filter(Boolean)
@@ -184,16 +169,12 @@ const SurveysPage: React.FC = () => {
   };
 
   const openEditModal = (survey: Survey) => {
-    const surveyYear = parseSurveyYear(survey.year);
+    const surveyYear = String(survey.year || "").trim();
 
     setEditingSurveyId(survey.id);
     setTitle(survey.title || "");
     setDescription(survey.description || "");
-    setYear(
-      Number.isFinite(surveyYear) && surveyYear > 0
-        ? String(surveyYear)
-        : initialAcademicYear
-    );
+    setYear(surveyYear || initialAcademicYear);
     setSemester((survey.semester || initialSemester || "YAZ") as "YAZ" | "YAY" | "PAYIZ");
     setGroupId(survey.employee_group_id ? String(survey.employee_group_id) : "");
     setQuestionBankId(survey.question_bank_id ? String(survey.question_bank_id) : "");
@@ -254,8 +235,8 @@ const SurveysPage: React.FC = () => {
       return;
     }
 
-    const normalizedYear = parseSurveyYear(year);
-    if (!Number.isFinite(normalizedYear) || normalizedYear <= 0) {
+    const normalizedYear = String(year || "").trim();
+    if (!normalizedYear) {
       setError("İl seçilməlidir");
       return;
     }
@@ -366,7 +347,7 @@ const SurveysPage: React.FC = () => {
           .filter((item) => item && item !== "NaN" && item !== "0")
       ])
     );
-    return years.sort((a, b) => Number(b) - Number(a));
+    return years.sort((a, b) => b.localeCompare(a));
   }, [academicYears, records]);
 
   const filteredRecords = useMemo(() => {

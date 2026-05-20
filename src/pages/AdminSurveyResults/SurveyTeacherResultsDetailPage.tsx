@@ -10,7 +10,7 @@ import { RiFileExcel2Line } from "react-icons/ri";
 type SurveyMeta = {
   id: number;
   title: string;
-  year: number;
+  year: string;
   semester?: "YAZ" | "YAY" | "PAYIZ";
 };
 

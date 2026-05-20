@@ -9,7 +9,7 @@ export interface SurveyActivityScoreInput {
 export interface CreateSurveyPayload {
   title: string
   description?: string
-  year: number
+  year: string
   semester: 'YAZ' | 'YAY' | 'PAYIZ'
   employee_group_id: number
   question_bank_id: number
@@ -22,7 +22,7 @@ export interface Survey {
   id: number
   title: string
   description?: string
-  year: number
+  year: string
   semester?: 'YAZ' | 'YAY' | 'PAYIZ'
   employee_group_id: number
   question_bank_id?: number | null
@@ -60,7 +60,7 @@ export interface SurveyTeacherResultsResponse {
   survey: {
     id: number
     title: string
-    year: number
+    year: string
     semester?: 'YAZ' | 'YAY' | 'PAYIZ'
   }
 }

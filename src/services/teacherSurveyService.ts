@@ -14,7 +14,7 @@ export interface PendingTeacherSurveyItem {
   survey_id: number
   title: string
   description?: string
-  year: number
+  year: string
   semester: 'YAZ' | 'YAY' | 'PAYIZ'
   group_name?: string
   teacher_id: number
@@ -30,7 +30,7 @@ export interface PendingTeacherSurveyItem {
 export interface CompletedTeacherSurveyItem {
   survey_id: number
   title: string
-  year: number
+  year: string
   semester: 'YAZ' | 'YAY' | 'PAYIZ'
   group_name?: string
   teacher_id: number
@@ -68,7 +68,7 @@ export interface TeacherSurveyResultItem {
   survey_id: number
   title: string
   description?: string
-  year: number
+  year: string
   semester?: 'YAZ' | 'YAY' | 'PAYIZ'
   employee_group_id?: number
   group_name?: string
