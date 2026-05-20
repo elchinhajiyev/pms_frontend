@@ -30,6 +30,7 @@ import AllUsersList from "./pages/Users/AllUsersList";
 import AccessRolesList from "./pages/AccessRoles/AccessRolesList";
 import HelperToolsPage from "./pages/HelperTools/HelperToolsPage";
 import SurveysPage from "./pages/Surveys/SurveysPage";
+import SurveyQuestionBanksPage from "./pages/SurveyQuestions/SurveyQuestionBanksPage";
 import TeachingSubjectsList from "./pages/TeachingSubjects/TeachingSubjectsList";
 import DepartmentsList from "./pages/Departments/DepartmentsList";
 import FacultiesList from "./pages/Faculties/FacultiesList";
@@ -115,6 +116,7 @@ export default function App() {
               <Route path="/all-users" element={<AllUsersList />} />
               <Route path="/access-roles" element={<AccessRolesList />} />
               <Route path="/surveys" element={<SurveysPage />} />
+              <Route path="/survey-question-banks" element={<SurveyQuestionBanksPage />} />
               <Route path="/teacher-evaluations/my-teachers" element={<MyTeachers />} />
               <Route path="/teacher-evaluations/completed" element={<CompletedTeacherSurveys />} />
               <Route path="/teacher-evaluations/pending" element={<PendingTeacherSurveys />} />

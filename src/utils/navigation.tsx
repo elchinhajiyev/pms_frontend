@@ -79,7 +79,8 @@ export const general: NavItem[] = [
       { name: "Təhsil statusları", path: "/user-statuses", pro: false },
       { name: "Köməkçi alətlər", path: "/helper-tools", pro: false },
       { name: "İcazələr", path: "/access-roles", pro: false },
-      { name: "Sorğular", path: "/surveys", pro: false },
+      { name: "Sorğu vərəqi", path: "/surveys", pro: false },
+      { name: "Suallar", path: "/survey-question-banks", pro: false },
       { name: "Ümumi fəaliyyətlər", path: "/evaluation/my-activities", pro: false },
      
      

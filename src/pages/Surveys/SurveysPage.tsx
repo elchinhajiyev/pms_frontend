@@ -384,13 +384,13 @@ const SurveysPage: React.FC = () => {
 
   return (
     <>
-      <PageMeta title="Sorğular | Performix" description="Sorğuların yaradılması və idarə olunması" />
-      <PageBreadcrumb pageTitle="Sorğular" />
+      <PageMeta title="Sorğu vərəqi | Performix" description="Sorğu vərəqlərinin yaradılması və idarə olunması" />
+      <PageBreadcrumb pageTitle="Sorğu vərəqi" />
 
       <div className="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-800">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Sorğular</h2>
+            <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Sorğu vərəqi</h2>
             <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
               Yeni sorğu yaradın, fəaliyyətləri əlavə edin və iştirakçıları seçin.
             </p>
