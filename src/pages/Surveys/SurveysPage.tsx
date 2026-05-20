@@ -13,6 +13,21 @@ import { useHelperToolOptions } from "../../hooks/useHelperToolOptions";
 
 const ROWS_PER_PAGE = 20;
 
+const parseSurveyYear = (value: string | number | undefined | null) => {
+  const text = String(value || "").trim();
+  const directYear = Number(text);
+
+  if (Number.isFinite(directYear) && directYear > 0) {
+    return directYear;
+  }
+
+  const yearMatch = text.match(/\d{4}/);
+  if (!yearMatch) return NaN;
+
+  const parsedYear = Number(yearMatch[0]);
+  return Number.isFinite(parsedYear) && parsedYear > 0 ? parsedYear : NaN;
+};
+
 const isTeacherGroup = (group: EmployeeGroup) => {
   const values = [group.code, group.name, group.name_en]
     .filter(Boolean)
@@ -169,7 +184,7 @@ const SurveysPage: React.FC = () => {
   };
 
   const openEditModal = (survey: Survey) => {
-    const surveyYear = Number(survey.year);
+    const surveyYear = parseSurveyYear(survey.year);
 
     setEditingSurveyId(survey.id);
     setTitle(survey.title || "");
@@ -239,7 +254,7 @@ const SurveysPage: React.FC = () => {
       return;
     }
 
-    const normalizedYear = Number(year);
+    const normalizedYear = parseSurveyYear(year);
     if (!Number.isFinite(normalizedYear) || normalizedYear <= 0) {
       setError("İl seçilməlidir");
       return;
