@@ -12,6 +12,7 @@ export interface CreateSurveyPayload {
   year: number
   semester: 'YAZ' | 'YAY' | 'PAYIZ'
   employee_group_id: number
+  question_bank_id: number
   activity_ids?: number[]
   activity_scores?: SurveyActivityScoreInput[]
   participant_ids: number[]
@@ -24,6 +25,8 @@ export interface Survey {
   year: number
   semester?: 'YAZ' | 'YAY' | 'PAYIZ'
   employee_group_id: number
+  question_bank_id?: number | null
+  question_bank_name?: string | null
   group_name?: string
   group_code?: string
   activity_scores: Array<{

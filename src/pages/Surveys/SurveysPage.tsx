@@ -4,9 +4,11 @@ import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
 import UserAvatar from "../../components/common/UserAvatar";
 import { employeeGroupService, EmployeeGroup } from "../../services/evaluationService";
-import { activityService, Activity } from "../../services/activityService";
 import { User } from "../../services/userService";
 import surveyService, { Survey } from "../../services/surveyService";
+import surveyQuestionBankService, {
+  SurveyQuestionBank,
+} from "../../services/surveyQuestionBankService";
 import { useHelperToolOptions } from "../../hooks/useHelperToolOptions";
 
 const ROWS_PER_PAGE = 20;
@@ -37,11 +39,9 @@ const SurveysPage: React.FC = () => {
   const [error, setError] = useState("");
 
   const [groups, setGroups] = useState<EmployeeGroup[]>([]);
-  const [allActivities, setAllActivities] = useState<Activity[]>([]);
-  const [activities, setActivities] = useState<Activity[]>([]);
+  const [questionBanks, setQuestionBanks] = useState<SurveyQuestionBank[]>([]);
   const [eligibleParticipants, setEligibleParticipants] = useState<User[]>([]);
   const [participantsLoaded, setParticipantsLoaded] = useState(false);
-  const [activityLoadFailed, setActivityLoadFailed] = useState(false);
 
   const [showModal, setShowModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -54,9 +54,7 @@ const SurveysPage: React.FC = () => {
   const [year, setYear] = useState(() => academicYears[0] || String(new Date().getFullYear()));
   const [semester, setSemester] = useState<"YAZ" | "YAY" | "PAYIZ">("YAZ");
   const [groupId, setGroupId] = useState<string>("");
-  const [selectedActivityIds, setSelectedActivityIds] = useState<number[]>([]);
-  const [activitySearch, setActivitySearch] = useState("");
-  const [activityCategoryFilter, setActivityCategoryFilter] = useState("");
+  const [questionBankId, setQuestionBankId] = useState<string>("");
   const [participantIds, setParticipantIds] = useState<number[]>([]);
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -97,10 +95,10 @@ const SurveysPage: React.FC = () => {
       setError("İşçi qrupları yüklənmədi");
     }
 
-    const [surveysResult, participantsResult, activitiesResult] = await Promise.allSettled([
+    const [surveysResult, participantsResult, questionBanksResult] = await Promise.allSettled([
       surveyService.getAll(),
       surveyService.getEligibleParticipants(),
-      activityService.getAll(),
+      surveyQuestionBankService.getAll(),
     ]);
 
     if (surveysResult.status === "fulfilled") {
@@ -127,22 +125,22 @@ const SurveysPage: React.FC = () => {
       setParticipantsLoaded(false);
     }
 
-    if (activitiesResult.status === "fulfilled") {
-      const activitiesRes = activitiesResult.value;
-      const activitiesData = Array.isArray(activitiesRes?.data)
-        ? activitiesRes.data
-        : Array.isArray(activitiesRes)
-          ? activitiesRes
+    if (questionBanksResult.status === "fulfilled") {
+      const questionBanksRes = questionBanksResult.value;
+      const questionBanksData = Array.isArray(questionBanksRes?.data)
+        ? questionBanksRes.data
+        : Array.isArray(questionBanksRes)
+          ? questionBanksRes
           : [];
-      setAllActivities(activitiesData);
+      setQuestionBanks(questionBanksData);
     } else {
-      setAllActivities([]);
+      setQuestionBanks([]);
     }
 
     if (
       surveysResult.status === "rejected" ||
       participantsResult.status === "rejected" ||
-      activitiesResult.status === "rejected"
+      questionBanksResult.status === "rejected"
     ) {
       setError((prev) => prev || "Sorğu məlumatlarının bir hissəsi yüklənmədi");
     }
@@ -160,85 +158,40 @@ const SurveysPage: React.FC = () => {
     setYear(initialAcademicYear);
     setSemester((initialSemester as "YAZ" | "YAY" | "PAYIZ") || "YAZ");
     setGroupId("");
-    setActivities(allActivities);
-    setActivityLoadFailed(false);
-    setSelectedActivityIds([]);
-    setActivitySearch("");
-    setActivityCategoryFilter("");
+    setQuestionBankId("");
     setParticipantIds([]);
     setError("");
     setShowModal(true);
   };
 
-  const onGroupChange = async (value: string) => {
+  const onGroupChange = (value: string) => {
     setGroupId(value);
-    setActivities(allActivities);
-    setSelectedActivityIds([]);
-    setActivityLoadFailed(false);
     setError("");
-
-    if (!value) {
-      return;
-    }
-
-    try {
-      const res = await activityService.getGroupActivities(Number(value));
-      const activityData = Array.isArray(res?.data)
-        ? res.data
-        : Array.isArray(res)
-          ? res
-          : [];
-      const nextActivities = activityData.length > 0 ? activityData : allActivities;
-
-      setActivities(nextActivities);
-      setSelectedActivityIds([]);
-    } catch {
-      if (allActivities.length > 0) {
-        setActivities(allActivities);
-        setSelectedActivityIds([]);
-      } else {
-        setActivities([]);
-        setSelectedActivityIds([]);
-        setActivityLoadFailed(true);
-        setError("Fəaliyyətlər yüklənmədi");
-      }
-    }
   };
 
-  const toggleActivity = (id: number) => {
-    setSelectedActivityIds((prev) =>
-      prev.includes(id) ? prev.filter((activityId) => activityId !== id) : [...prev, id]
-    );
+  const onQuestionBankChange = (value: string) => {
+    setQuestionBankId(value);
+    setError("");
   };
 
-  const activityCategories = useMemo(() => {
-    return Array.from(
-      new Set(
-        activities
-          .map((activity) => String(activity.category || "").trim())
-          .filter(Boolean)
-      )
-    ).sort((a, b) => a.localeCompare(b));
-  }, [activities]);
+  const selectedQuestionBank = useMemo(
+    () => questionBanks.find((bank) => String(bank.id) === questionBankId) || null,
+    [questionBanks, questionBankId]
+  );
 
-  const filteredActivities = useMemo(() => {
-    const search = activitySearch.trim().toLowerCase();
-
-    return activities.filter((activity) => {
-      const matchesSearch =
-        !search ||
-        [activity.name, activity.name_en, activity.code, activity.description]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase()
-          .includes(search);
-      const matchesCategory =
-        !activityCategoryFilter ||
-        String(activity.category || "") === activityCategoryFilter;
-
-      return matchesSearch && matchesCategory;
-    });
-  }, [activities, activitySearch, activityCategoryFilter]);
+  const selectedQuestionBankActivityIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          (selectedQuestionBank?.questions || [])
+            .map((question) => question.activity_id)
+            .filter((activityId) => activityId !== null && activityId !== undefined)
+            .map(Number)
+            .filter(Number.isFinite)
+        )
+      ),
+    [selectedQuestionBank]
+  );
 
   const toggleParticipant = (id: number) => {
     setParticipantIds((prev) =>
@@ -273,13 +226,13 @@ const SurveysPage: React.FC = () => {
       return;
     }
 
-    if (selectedActivityIds.length === 0) {
-      setError("Ən azı bir fəaliyyət seçilməlidir");
+    if (!questionBankId || !selectedQuestionBank) {
+      setError("Sual bankı seçilməlidir");
       return;
     }
 
-    if (activityLoadFailed) {
-      setError("Fəaliyyətlər yüklənmədiyi üçün sorğu yaradıla bilməz");
+    if (selectedQuestionBankActivityIds.length === 0) {
+      setError("Seçilmiş sual bankında fəaliyyətlə əlaqələndirilmiş sual yoxdur");
       return;
     }
 
@@ -298,7 +251,6 @@ const SurveysPage: React.FC = () => {
 
     try {
       const normalizedSemester = semester.toUpperCase() as "YAZ" | "YAY" | "PAYIZ";
-      const normalizedActivityIds = Array.from(new Set(selectedActivityIds));
       const normalizedParticipantIds = Array.from(new Set(participantIds));
 
       await surveyService.create({
@@ -307,7 +259,8 @@ const SurveysPage: React.FC = () => {
         year: Number(year),
         semester: normalizedSemester as "YAZ" | "YAY" | "PAYIZ",
         employee_group_id: Number(groupId),
-        activity_ids: normalizedActivityIds,
+        question_bank_id: Number(questionBankId),
+        activity_ids: selectedQuestionBankActivityIds,
         participant_ids: normalizedParticipantIds,
       });
 
@@ -656,6 +609,29 @@ const SurveysPage: React.FC = () => {
 
                 <div>
                   <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Sual bankını seç *
+                  </label>
+                  <select
+                    value={questionBankId}
+                    onChange={(e) => onQuestionBankChange(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                  >
+                    <option value="">Seçin</option>
+                    {questionBanks.map((bank) => (
+                      <option key={bank.id} value={bank.id}>
+                        {bank.name}
+                      </option>
+                    ))}
+                  </select>
+                  {questionBanks.length === 0 && (
+                    <p className="mt-1 text-xs text-red-600 dark:text-red-300">
+                      Sual bankı tapılmadı.
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Semestr *
                   </label>
                   <select
@@ -674,73 +650,48 @@ const SurveysPage: React.FC = () => {
 
               <div>
                 <h4 className="mb-2 text-sm font-semibold text-gray-800 dark:text-white">
-                  Fəaliyyətlər (sorğuya əlavə ediləcək)
+                  Suallar
                 </h4>
-                {activities.length === 0 ? (
+                {!selectedQuestionBank ? (
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Fəaliyyət tapılmadı.
+                    Sualları görmək üçün sual bankı seçin.
                   </p>
                 ) : (
                   <div className="rounded-lg border border-gray-200 dark:border-gray-700">
-                    <div className="grid gap-3 border-b border-gray-200 p-3 dark:border-gray-700 md:grid-cols-2">
-                      <div>
-                        <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
-                          Fəaliyyət axtar
-                        </label>
-                        <input
-                          type="text"
-                          value={activitySearch}
-                          onChange={(event) => setActivitySearch(event.target.value)}
-                          placeholder="Ad, kod və ya izah yazın..."
-                          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
-                          Kateqoriya filteri
-                        </label>
-                        <select
-                          value={activityCategoryFilter}
-                          onChange={(event) => setActivityCategoryFilter(event.target.value)}
-                          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-                        >
-                          <option value="">Bütün kateqoriyalar</option>
-                          {activityCategories.map((category) => (
-                            <option key={category} value={category}>
-                              {category}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                    <div className="border-b border-gray-200 px-3 py-2 dark:border-gray-700">
+                      <p className="text-sm font-medium text-gray-800 dark:text-white">
+                        {selectedQuestionBank.name}
+                      </p>
+                      <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                        Fəaliyyətlə əlaqəli suallar avtomatik sorğuya əlavə edilir.
+                      </p>
                     </div>
 
-                    <div className="max-h-72 space-y-2 overflow-y-auto p-3">
-                      {filteredActivities.length === 0 ? (
+                    <div className="max-h-72 overflow-y-auto">
+                      {selectedQuestionBank.questions.length === 0 ? (
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Filterə uyğun fəaliyyət tapılmadı.
+                          Bu sual bankında sual yoxdur.
                         </p>
                       ) : (
-                        filteredActivities.map((activity) => (
-                          <label
-                            key={activity.id}
-                            className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-gray-800 hover:bg-gray-50 dark:text-white dark:hover:bg-gray-700/40"
+                        selectedQuestionBank.questions.map((question, index) => (
+                          <div
+                            key={question.id || `${question.question_text}-${index}`}
+                            className="flex gap-3 border-b border-gray-100 px-3 py-2 text-sm last:border-b-0 dark:border-gray-700"
                           >
-                            <input
-                              type="checkbox"
-                              checked={selectedActivityIds.includes(activity.id)}
-                              onChange={() => toggleActivity(activity.id)}
-                              className="h-5 w-5"
-                            />
-                            <span>
-                              {activity.name}
-                              {activity.category ? (
-                                <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
-                                  {activity.category}
-                                </span>
-                              ) : null}
+                            <span className="mt-0.5 w-7 shrink-0 text-xs font-medium text-gray-500 dark:text-gray-400">
+                              #{index + 1}
                             </span>
-                          </label>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-gray-800 dark:text-white">
+                                {question.question_text}
+                              </p>
+                              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                {question.activity_name
+                                  ? `Fəaliyyət: ${question.activity_name}`
+                                  : "Fəaliyyət seçilməyib"}
+                              </p>
+                            </div>
+                          </div>
                         ))
                       )}
                     </div>
@@ -823,7 +774,7 @@ const SurveysPage: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  disabled={submitting || !participantsLoaded || activityLoadFailed}
+                  disabled={submitting || !participantsLoaded}
                   className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-60"
                 >
                   {submitting ? "Yaradılır..." : "Sorğunu yarat"}
