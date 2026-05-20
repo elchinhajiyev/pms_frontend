@@ -20,6 +20,7 @@ export interface User {
   middle_name?: string
   email?: string
   fin?: string
+  photo?: string | null
   position_id?: number
   department_id?: number
   employee_group_id?: number

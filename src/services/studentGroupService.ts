@@ -44,6 +44,7 @@ export interface StudentGroupStudent {
   middle_name?: string
   email: string
   fin: string
+  photo?: string | null
   phone?: string
   created_at?: string
 }

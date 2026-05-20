@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
+import UserAvatar from "../../components/common/UserAvatar";
 import accessRoleService, { AccessRole } from "../../services/accessRoleService";
 import { userManagementService, User } from "../../services/userService";
 
@@ -295,8 +296,16 @@ const AccessRolesList: React.FC = () => {
                     className="border-b border-gray-100 dark:border-gray-700"
                   >
                     <td className="py-3 pr-4 text-gray-800 dark:text-white">
-                      {user.last_name} {user.first_name}
-                      {user.middle_name ? ` ${user.middle_name}` : ""}
+                      <div className="flex items-center gap-3">
+                        <UserAvatar
+                          photo={user.photo}
+                          name={`${user.last_name} ${user.first_name}`}
+                        />
+                        <span>
+                          {user.last_name} {user.first_name}
+                          {user.middle_name ? ` ${user.middle_name}` : ""}
+                        </span>
+                      </div>
                     </td>
                     <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">
                       {user.email || "—"}

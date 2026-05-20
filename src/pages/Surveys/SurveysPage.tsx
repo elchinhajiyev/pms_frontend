@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { isAxiosError } from "axios";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
+import UserAvatar from "../../components/common/UserAvatar";
 import { employeeGroupService, EmployeeGroup } from "../../services/evaluationService";
 import { activityService, Activity } from "../../services/activityService";
 import { User } from "../../services/userService";
@@ -683,8 +684,15 @@ const SurveysPage: React.FC = () => {
                           key={user.id}
                           className="flex cursor-pointer items-center justify-between rounded-md px-2 py-1 hover:bg-gray-50 dark:hover:bg-gray-700/30"
                         >
-                          <span className="text-sm text-gray-700 dark:text-gray-300">
-                            {user.last_name} {user.first_name} ({user.fin || "FİN yoxdur"})
+                          <span className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
+                            <UserAvatar
+                              photo={user.photo}
+                              name={`${user.last_name} ${user.first_name}`}
+                              size="sm"
+                            />
+                            <span>
+                              {user.last_name} {user.first_name} ({user.fin || "FİN yoxdur"})
+                            </span>
                           </span>
                           <input
                             type="checkbox"

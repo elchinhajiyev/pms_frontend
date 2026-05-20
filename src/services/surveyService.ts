@@ -35,6 +35,7 @@ export interface Survey {
     user_id: number
     full_name: string
     fin?: string
+    photo?: string | null
   }>
   created_at: string
 }
@@ -44,6 +45,7 @@ export interface SurveyTeacherResultRow {
   first_name: string
   last_name: string
   middle_name?: string
+  photo?: string | null
   fin?: string
   department_name?: string
   voter_count: number

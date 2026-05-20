@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
+import UserAvatar from "../../components/common/UserAvatar";
 import { useAuth } from "../../context/AuthContext";
 import { evaluationService, PendingEvaluation } from "../../services/evaluationService";
 
@@ -84,11 +85,10 @@ export default function PendingEvaluations() {
                     className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50 transition"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center">
-                        <span className="text-brand-600 dark:text-brand-400 font-medium">
-                          {item.first_name.charAt(0)}{item.last_name.charAt(0)}
-                        </span>
-                      </div>
+                      <UserAvatar
+                        photo={item.photo}
+                        name={`${item.first_name} ${item.last_name}`}
+                      />
                       <div>
                         <p className="font-medium text-gray-800 dark:text-white">
                           {item.first_name} {item.last_name}

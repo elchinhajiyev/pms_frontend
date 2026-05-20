@@ -84,6 +84,7 @@ export interface TeacherSurveyParticipantItem {
   first_name: string
   last_name: string
   middle_name?: string
+  photo?: string | null
   group_number?: string
   phone?: string
   has_participated: boolean

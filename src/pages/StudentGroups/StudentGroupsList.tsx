@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
+import UserAvatar from "../../components/common/UserAvatar";
 import studentGroupService, {
   StudentGroup,
   StudentGroupStudent,
@@ -583,6 +584,11 @@ export default function StudentGroupsList() {
                               onChange={() => toggleMultiValue("teacher_ids", teacher.id)}
                               className="h-4 w-4"
                             />
+                            <UserAvatar
+                              photo={teacher.photo}
+                              name={`${teacher.last_name} ${teacher.first_name}`}
+                              size="sm"
+                            />
                             <span className="text-sm text-gray-700 dark:text-gray-300">
                               {teacher.last_name} {teacher.first_name}
                             </span>
@@ -675,9 +681,18 @@ export default function StudentGroupsList() {
                     {students.map((student) => (
                       <tr key={student.id} className="border-b border-gray-100 dark:border-gray-700">
                         <td className="py-2 pr-3 text-gray-800 dark:text-white">
-                          {[student.first_name, student.last_name]
-                            .filter(Boolean)
-                            .join(" ")}
+                          <div className="flex items-center gap-3">
+                            <UserAvatar
+                              photo={student.photo}
+                              name={`${student.first_name} ${student.last_name}`}
+                              size="sm"
+                            />
+                            <span>
+                              {[student.first_name, student.last_name]
+                                .filter(Boolean)
+                                .join(" ")}
+                            </span>
+                          </div>
                         </td>
                         <td className="py-2 pr-3 text-gray-600 dark:text-gray-400">{student.fin || "-"}</td>
                         <td className="py-2 pr-3 text-gray-600 dark:text-gray-400">{student.email || "-"}</td>

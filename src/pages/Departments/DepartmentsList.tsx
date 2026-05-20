@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
+import UserAvatar from "../../components/common/UserAvatar";
 import departmentService, {
   Department,
   DepartmentMember,
@@ -554,8 +555,13 @@ export default function DepartmentsList() {
                                 key={userId}
                                 className="flex items-center justify-between px-3 py-2 text-sm"
                               >
-                                <span className="text-gray-800 dark:text-gray-200">
-                                  {user?.first_name} {user?.last_name}
+                                <span className="flex items-center gap-3 text-gray-800 dark:text-gray-200">
+                                  <UserAvatar
+                                    photo={user?.photo}
+                                    name={`${user?.first_name || ""} ${user?.last_name || ""}`}
+                                    size="sm"
+                                  />
+                                  <span>{user?.first_name} {user?.last_name}</span>
                                 </span>
                                 <button
                                   onClick={() =>

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
+import UserAvatar from "../../components/common/UserAvatar";
 import { groupMemberService, GroupMember } from "../../services/activityService";
 import { employeeGroupService, EmployeeGroup } from "../../services/evaluationService";
 import accessRoleService, { AccessRole } from "../../services/accessRoleService";
@@ -296,6 +297,11 @@ export default function GroupMembers() {
                                 disabled={adding}
                                 className="mt-0.5 h-5 w-5"
                               />
+                              <UserAvatar
+                                photo={user.photo}
+                                name={`${user.last_name} ${user.first_name}`}
+                                size="sm"
+                              />
                               <span className="min-w-0 text-sm text-gray-800 dark:text-white">
                                 <span className="block font-medium">
                                   {user.last_name} {user.first_name}
@@ -356,8 +362,16 @@ export default function GroupMembers() {
                           className="border-b border-gray-100 dark:border-gray-700"
                         >
                           <td className="py-3 pr-4 text-gray-800 dark:text-white">
-                            {m.last_name} {m.first_name}
-                            {m.middle_name ? ` ${m.middle_name}` : ""}
+                            <div className="flex items-center gap-3">
+                              <UserAvatar
+                                photo={m.photo}
+                                name={`${m.last_name} ${m.first_name}`}
+                              />
+                              <span>
+                                {m.last_name} {m.first_name}
+                                {m.middle_name ? ` ${m.middle_name}` : ""}
+                              </span>
+                            </div>
                           </td>
                           <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">
                             {m.email || "—"}

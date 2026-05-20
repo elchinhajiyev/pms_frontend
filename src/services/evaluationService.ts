@@ -90,6 +90,7 @@ export interface PendingEvaluation {
   first_name: string
   last_name: string
   email: string
+  photo?: string | null
   group_id: number
   group_code: string
   group_name: string

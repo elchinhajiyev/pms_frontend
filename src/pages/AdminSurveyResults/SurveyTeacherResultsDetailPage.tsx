@@ -3,6 +3,7 @@ import { useParams } from "react-router";
 import * as XLSX from "xlsx";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
+import UserAvatar from "../../components/common/UserAvatar";
 import surveyService, { SurveyTeacherResultRow } from "../../services/surveyService";
 import { RiFileExcel2Line } from "react-icons/ri";
 
@@ -131,7 +132,16 @@ export default function SurveyTeacherResultsDetailPage() {
                     }`}
                   >
                     <td className="px-3 py-2 text-gray-700 dark:text-gray-300">
-                      {[row.last_name, row.first_name, row.middle_name].filter(Boolean).join(" ")}
+                      <div className="flex items-center gap-3">
+                        <UserAvatar
+                          photo={row.photo}
+                          name={[row.last_name, row.first_name].filter(Boolean).join(" ")}
+                          size="sm"
+                        />
+                        <span>
+                          {[row.last_name, row.first_name, row.middle_name].filter(Boolean).join(" ")}
+                        </span>
+                      </div>
                     </td>
                     <td className="px-3 py-2 text-gray-600 dark:text-gray-400">{row.fin || "-"}</td>
                     <td className="px-3 py-2 text-gray-600 dark:text-gray-400">{row.department_name || "-"}</td>

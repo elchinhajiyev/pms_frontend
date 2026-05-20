@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { MdOutlineMoreHoriz } from "react-icons/md";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
+import UserAvatar from "../../components/common/UserAvatar";
 import { Modal } from "../../components/ui/modal";
 import { useAuth } from "../../context/AuthContext";
 import teacherSurveyService, {
@@ -329,8 +330,17 @@ export default function TeacherSurveyResults() {
                 {participants.map((student, index) => (
                   <tr key={student.participant_id} className="border-b border-gray-100 last:border-b-0 dark:border-gray-700">
                     <td className="px-3 py-2 text-gray-700 dark:text-gray-300">
-                      <span className="mr-2 text-xs text-gray-500 dark:text-gray-400">{index + 1}.</span>
-                      {[student.first_name, student.last_name, student.middle_name].filter(Boolean).join(" ")}
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">{index + 1}.</span>
+                        <UserAvatar
+                          photo={student.photo}
+                          name={[student.first_name, student.last_name].filter(Boolean).join(" ")}
+                          size="sm"
+                        />
+                        <span>
+                          {[student.first_name, student.last_name, student.middle_name].filter(Boolean).join(" ")}
+                        </span>
+                      </div>
                     </td>
                     <td className="px-3 py-2 text-gray-600 dark:text-gray-400">{student.group_number || "-"}</td>
                     <td className="px-3 py-2 text-gray-600 dark:text-gray-400">{student.phone || "-"}</td>
