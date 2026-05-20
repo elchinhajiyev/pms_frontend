@@ -239,6 +239,12 @@ const SurveysPage: React.FC = () => {
       return;
     }
 
+    const normalizedYear = Number(year);
+    if (!Number.isFinite(normalizedYear) || normalizedYear <= 0) {
+      setError("İl seçilməlidir");
+      return;
+    }
+
     if (!groupId) {
       setError("İşçi qrupu seçilməlidir");
       return;
@@ -278,7 +284,7 @@ const SurveysPage: React.FC = () => {
       const payload = {
         title: title.trim(),
         description: description.trim(),
-        year: Number(year),
+        year: normalizedYear,
         semester: normalizedSemester as "YAZ" | "YAY" | "PAYIZ",
         employee_group_id: Number(groupId),
         question_bank_id: Number(questionBankId),
