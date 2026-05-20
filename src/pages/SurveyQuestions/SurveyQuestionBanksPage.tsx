@@ -173,7 +173,13 @@ export default function SurveyQuestionBanksPage() {
   const selectActivity = (activityId: string) => {
     if (!activityModalQuestionId) return;
 
-    updateQuestion(activityModalQuestionId, { activity_id: activityId });
+    const currentQuestion = questions.find(
+      (question) => question.id === activityModalQuestionId
+    );
+    const nextActivityId =
+      currentQuestion?.activity_id === activityId ? "" : activityId;
+
+    updateQuestion(activityModalQuestionId, { activity_id: nextActivityId });
     setActivityModalQuestionId(null);
     setActivitySearch("");
   };
