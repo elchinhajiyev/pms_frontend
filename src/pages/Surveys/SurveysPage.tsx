@@ -55,6 +55,8 @@ const SurveysPage: React.FC = () => {
   const [semester, setSemester] = useState<"YAZ" | "YAY" | "PAYIZ">("YAZ");
   const [groupId, setGroupId] = useState<string>("");
   const [selectedActivityIds, setSelectedActivityIds] = useState<number[]>([]);
+  const [activitySearch, setActivitySearch] = useState("");
+  const [activityCategoryFilter, setActivityCategoryFilter] = useState("");
   const [participantIds, setParticipantIds] = useState<number[]>([]);
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -161,6 +163,8 @@ const SurveysPage: React.FC = () => {
     setActivities(allActivities);
     setActivityLoadFailed(false);
     setSelectedActivityIds([]);
+    setActivitySearch("");
+    setActivityCategoryFilter("");
     setParticipantIds([]);
     setError("");
     setShowModal(true);
@@ -206,6 +210,35 @@ const SurveysPage: React.FC = () => {
       prev.includes(id) ? prev.filter((activityId) => activityId !== id) : [...prev, id]
     );
   };
+
+  const activityCategories = useMemo(() => {
+    return Array.from(
+      new Set(
+        activities
+          .map((activity) => String(activity.category || "").trim())
+          .filter(Boolean)
+      )
+    ).sort((a, b) => a.localeCompare(b));
+  }, [activities]);
+
+  const filteredActivities = useMemo(() => {
+    const search = activitySearch.trim().toLowerCase();
+
+    return activities.filter((activity) => {
+      const matchesSearch =
+        !search ||
+        [activity.name, activity.name_en, activity.code, activity.description]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase()
+          .includes(search);
+      const matchesCategory =
+        !activityCategoryFilter ||
+        String(activity.category || "") === activityCategoryFilter;
+
+      return matchesSearch && matchesCategory;
+    });
+  }, [activities, activitySearch, activityCategoryFilter]);
 
   const toggleParticipant = (id: number) => {
     setParticipantIds((prev) =>
@@ -648,21 +681,69 @@ const SurveysPage: React.FC = () => {
                     Fəaliyyət tapılmadı.
                   </p>
                 ) : (
-                  <div className="max-h-72 space-y-2 overflow-y-auto rounded-lg border border-gray-200 p-3 dark:border-gray-700">
-                    {activities.map((activity) => (
-                      <label
-                        key={activity.id}
-                        className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-gray-800 hover:bg-gray-50 dark:text-white dark:hover:bg-gray-700/40"
-                      >
+                  <div className="rounded-lg border border-gray-200 dark:border-gray-700">
+                    <div className="grid gap-3 border-b border-gray-200 p-3 dark:border-gray-700 md:grid-cols-2">
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                          Fəaliyyət axtar
+                        </label>
                         <input
-                          type="checkbox"
-                          checked={selectedActivityIds.includes(activity.id)}
-                          onChange={() => toggleActivity(activity.id)}
-                          className="h-5 w-5"
+                          type="text"
+                          value={activitySearch}
+                          onChange={(event) => setActivitySearch(event.target.value)}
+                          placeholder="Ad, kod və ya izah yazın..."
+                          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
                         />
-                        <span>{activity.name}</span>
-                      </label>
-                    ))}
+                      </div>
+
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                          Kateqoriya filteri
+                        </label>
+                        <select
+                          value={activityCategoryFilter}
+                          onChange={(event) => setActivityCategoryFilter(event.target.value)}
+                          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                        >
+                          <option value="">Bütün kateqoriyalar</option>
+                          {activityCategories.map((category) => (
+                            <option key={category} value={category}>
+                              {category}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="max-h-72 space-y-2 overflow-y-auto p-3">
+                      {filteredActivities.length === 0 ? (
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Filterə uyğun fəaliyyət tapılmadı.
+                        </p>
+                      ) : (
+                        filteredActivities.map((activity) => (
+                          <label
+                            key={activity.id}
+                            className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-gray-800 hover:bg-gray-50 dark:text-white dark:hover:bg-gray-700/40"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedActivityIds.includes(activity.id)}
+                              onChange={() => toggleActivity(activity.id)}
+                              className="h-5 w-5"
+                            />
+                            <span>
+                              {activity.name}
+                              {activity.category ? (
+                                <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                                  {activity.category}
+                                </span>
+                              ) : null}
+                            </span>
+                          </label>
+                        ))
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
