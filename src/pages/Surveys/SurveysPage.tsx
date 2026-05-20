@@ -46,12 +46,13 @@ const SurveysPage: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [surveyToDelete, setSurveyToDelete] = useState<Survey | null>(null);
+  const [editingSurveyId, setEditingSurveyId] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [year, setYear] = useState(() => academicYears[0] || String(new Date().getFullYear()));
+  const [year, setYear] = useState(() => String(new Date().getFullYear()));
   const [semester, setSemester] = useState<"YAZ" | "YAY" | "PAYIZ">("YAZ");
   const [groupId, setGroupId] = useState<string>("");
   const [questionBankId, setQuestionBankId] = useState<string>("");
@@ -63,7 +64,9 @@ const SurveysPage: React.FC = () => {
   const [filterGroupId, setFilterGroupId] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
-  const initialAcademicYear = academicYears[0] || String(new Date().getFullYear());
+  const initialAcademicYear =
+    academicYears.find((item) => String(item || "").trim()) ||
+    String(new Date().getFullYear());
   const initialSemester = semesters[0] || "YAZ";
 
   const extractApiErrorMessage = (err: unknown, fallback: string) => {
@@ -153,6 +156,7 @@ const SurveysPage: React.FC = () => {
   }, []);
 
   const openCreateModal = () => {
+    setEditingSurveyId(null);
     setTitle("");
     setDescription("");
     setYear(initialAcademicYear);
@@ -160,6 +164,25 @@ const SurveysPage: React.FC = () => {
     setGroupId("");
     setQuestionBankId("");
     setParticipantIds([]);
+    setError("");
+    setShowModal(true);
+  };
+
+  const openEditModal = (survey: Survey) => {
+    const surveyYear = Number(survey.year);
+
+    setEditingSurveyId(survey.id);
+    setTitle(survey.title || "");
+    setDescription(survey.description || "");
+    setYear(
+      Number.isFinite(surveyYear) && surveyYear > 0
+        ? String(surveyYear)
+        : initialAcademicYear
+    );
+    setSemester((survey.semester || initialSemester || "YAZ") as "YAZ" | "YAY" | "PAYIZ");
+    setGroupId(survey.employee_group_id ? String(survey.employee_group_id) : "");
+    setQuestionBankId(survey.question_bank_id ? String(survey.question_bank_id) : "");
+    setParticipantIds((survey.participants || []).map((participant) => participant.user_id));
     setError("");
     setShowModal(true);
   };
@@ -252,8 +275,7 @@ const SurveysPage: React.FC = () => {
     try {
       const normalizedSemester = semester.toUpperCase() as "YAZ" | "YAY" | "PAYIZ";
       const normalizedParticipantIds = Array.from(new Set(participantIds));
-
-      await surveyService.create({
+      const payload = {
         title: title.trim(),
         description: description.trim(),
         year: Number(year),
@@ -262,12 +284,26 @@ const SurveysPage: React.FC = () => {
         question_bank_id: Number(questionBankId),
         activity_ids: selectedQuestionBankActivityIds,
         participant_ids: normalizedParticipantIds,
-      });
+      };
+
+      if (editingSurveyId) {
+        await surveyService.update(editingSurveyId, payload);
+      } else {
+        await surveyService.create(payload);
+      }
 
       setShowModal(false);
+      setEditingSurveyId(null);
       await loadInitialData();
     } catch (err) {
-      setError(extractApiErrorMessage(err, "Sorğu yaradılarkən xəta baş verdi"));
+      setError(
+        extractApiErrorMessage(
+          err,
+          editingSurveyId
+            ? "Sorğu redaktə edilərkən xəta baş verdi"
+            : "Sorğu yaradılarkən xəta baş verdi"
+        )
+      );
     } finally {
       setSubmitting(false);
     }
@@ -303,7 +339,10 @@ const SurveysPage: React.FC = () => {
     const years = Array.from(
       new Set([
         ...academicYears,
-        ...records.map((item) => String(item.year)).filter((item) => item && item !== "NaN")
+        String(new Date().getFullYear()),
+        ...records
+          .map((item) => String(item.year))
+          .filter((item) => item && item !== "NaN" && item !== "0")
       ])
     );
     return years.sort((a, b) => Number(b) - Number(a));
@@ -488,12 +527,20 @@ const SurveysPage: React.FC = () => {
                     </td>
                     <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{record.participants?.length || 0}</td>
                     <td className="py-3 pr-4 text-right">
-                      <button
-                        onClick={() => openDeleteConfirm(record)}
-                        className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700"
-                      >
-                        Sil
-                      </button>
+                      <div className="inline-flex items-center gap-2">
+                        <button
+                          onClick={() => openEditModal(record)}
+                          className="rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                        >
+                          Redaktə
+                        </button>
+                        <button
+                          onClick={() => openDeleteConfirm(record)}
+                          className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700"
+                        >
+                          Sil
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -530,9 +577,14 @@ const SurveysPage: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Yeni sorğu yarat</h3>
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                {editingSurveyId ? "Sorğunu redaktə et" : "Yeni sorğu yarat"}
+              </h3>
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => {
+                  setShowModal(false);
+                  setEditingSurveyId(null);
+                }}
                 className="rounded-md border border-gray-300 px-3 py-1 text-sm text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
               >
                 Bağla
@@ -576,7 +628,7 @@ const SurveysPage: React.FC = () => {
                     onChange={(e) => setYear(e.target.value)}
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
                   >
-                    {academicYears.map((y) => (
+                    {availableYears.map((y) => (
                       <option key={y} value={y}>
                         {y}
                       </option>
@@ -767,7 +819,10 @@ const SurveysPage: React.FC = () => {
               <div className="flex justify-end gap-3">
                 <button
                   type="button"
-                  onClick={() => setShowModal(false)}
+                  onClick={() => {
+                    setShowModal(false);
+                    setEditingSurveyId(null);
+                  }}
                   className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
                 >
                   Ləğv et
@@ -777,7 +832,13 @@ const SurveysPage: React.FC = () => {
                   disabled={submitting || !participantsLoaded}
                   className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-60"
                 >
-                  {submitting ? "Yaradılır..." : "Sorğunu yarat"}
+                  {submitting
+                    ? editingSurveyId
+                      ? "Saxlanılır..."
+                      : "Yaradılır..."
+                    : editingSurveyId
+                      ? "Saxla"
+                      : "Sorğunu yarat"}
                 </button>
               </div>
             </form>

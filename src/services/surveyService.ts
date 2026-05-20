@@ -76,6 +76,11 @@ const surveyService = {
     return response.data
   },
 
+  async update(id: number, data: CreateSurveyPayload) {
+    const response = await api.put(`/evaluation/surveys/${id}`, data)
+    return response.data
+  },
+
   async delete(id: number) {
     const response = await api.delete(`/evaluation/surveys/${id}`)
     return response.data
