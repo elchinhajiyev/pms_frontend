@@ -160,7 +160,7 @@ const SurveysPage: React.FC = () => {
     setGroupId("");
     setActivities(allActivities);
     setActivityLoadFailed(false);
-    setSelectedActivityIds(allActivities.map((activity) => activity.id));
+    setSelectedActivityIds([]);
     setParticipantIds([]);
     setError("");
     setShowModal(true);
@@ -187,11 +187,11 @@ const SurveysPage: React.FC = () => {
       const nextActivities = activityData.length > 0 ? activityData : allActivities;
 
       setActivities(nextActivities);
-      setSelectedActivityIds(nextActivities.map((a: Activity) => a.id));
+      setSelectedActivityIds([]);
     } catch {
       if (allActivities.length > 0) {
         setActivities(allActivities);
-        setSelectedActivityIds(allActivities.map((activity) => activity.id));
+        setSelectedActivityIds([]);
       } else {
         setActivities([]);
         setSelectedActivityIds([]);
@@ -648,22 +648,20 @@ const SurveysPage: React.FC = () => {
                     Fəaliyyət tapılmadı.
                   </p>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="max-h-72 space-y-2 overflow-y-auto rounded-lg border border-gray-200 p-3 dark:border-gray-700">
                     {activities.map((activity) => (
-                      <div
+                      <label
                         key={activity.id}
-                        className="rounded-lg border border-gray-200 p-3 dark:border-gray-700"
+                        className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-gray-800 hover:bg-gray-50 dark:text-white dark:hover:bg-gray-700/40"
                       >
-                        <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-gray-800 dark:text-white">
-                          <input
-                            type="checkbox"
-                            checked={selectedActivityIds.includes(activity.id)}
-                            onChange={() => toggleActivity(activity.id)}
-                            className="h-5 w-5"
-                          />
-                          {activity.name}
-                        </label>
-                      </div>
+                        <input
+                          type="checkbox"
+                          checked={selectedActivityIds.includes(activity.id)}
+                          onChange={() => toggleActivity(activity.id)}
+                          className="h-5 w-5"
+                        />
+                        <span>{activity.name}</span>
+                      </label>
                     ))}
                   </div>
                 )}
