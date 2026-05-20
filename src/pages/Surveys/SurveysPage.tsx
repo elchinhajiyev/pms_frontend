@@ -37,6 +37,7 @@ const SurveysPage: React.FC = () => {
   const [error, setError] = useState("");
 
   const [groups, setGroups] = useState<EmployeeGroup[]>([]);
+  const [allActivities, setAllActivities] = useState<Activity[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [eligibleParticipants, setEligibleParticipants] = useState<User[]>([]);
   const [participantsLoaded, setParticipantsLoaded] = useState(false);
@@ -94,9 +95,10 @@ const SurveysPage: React.FC = () => {
       setError("İşçi qrupları yüklənmədi");
     }
 
-    const [surveysResult, participantsResult] = await Promise.allSettled([
+    const [surveysResult, participantsResult, activitiesResult] = await Promise.allSettled([
       surveyService.getAll(),
       surveyService.getEligibleParticipants(),
+      activityService.getAll(),
     ]);
 
     if (surveysResult.status === "fulfilled") {
@@ -123,9 +125,22 @@ const SurveysPage: React.FC = () => {
       setParticipantsLoaded(false);
     }
 
+    if (activitiesResult.status === "fulfilled") {
+      const activitiesRes = activitiesResult.value;
+      const activitiesData = Array.isArray(activitiesRes?.data)
+        ? activitiesRes.data
+        : Array.isArray(activitiesRes)
+          ? activitiesRes
+          : [];
+      setAllActivities(activitiesData);
+    } else {
+      setAllActivities([]);
+    }
+
     if (
       surveysResult.status === "rejected" ||
-      participantsResult.status === "rejected"
+      participantsResult.status === "rejected" ||
+      activitiesResult.status === "rejected"
     ) {
       setError((prev) => prev || "Sorğu məlumatlarının bir hissəsi yüklənmədi");
     }
@@ -143,9 +158,9 @@ const SurveysPage: React.FC = () => {
     setYear(initialAcademicYear);
     setSemester((initialSemester as "YAZ" | "YAY" | "PAYIZ") || "YAZ");
     setGroupId("");
-    setActivities([]);
+    setActivities(allActivities);
     setActivityLoadFailed(false);
-    setSelectedActivityIds([]);
+    setSelectedActivityIds(allActivities.map((activity) => activity.id));
     setParticipantIds([]);
     setError("");
     setShowModal(true);
@@ -153,7 +168,7 @@ const SurveysPage: React.FC = () => {
 
   const onGroupChange = async (value: string) => {
     setGroupId(value);
-    setActivities([]);
+    setActivities(allActivities);
     setSelectedActivityIds([]);
     setActivityLoadFailed(false);
     setError("");
@@ -169,14 +184,20 @@ const SurveysPage: React.FC = () => {
         : Array.isArray(res)
           ? res
           : [];
+      const nextActivities = activityData.length > 0 ? activityData : allActivities;
 
-      setActivities(activityData);
-      setSelectedActivityIds(activityData.map((a: Activity) => a.id));
+      setActivities(nextActivities);
+      setSelectedActivityIds(nextActivities.map((a: Activity) => a.id));
     } catch {
-      setActivities([]);
-      setSelectedActivityIds([]);
-      setActivityLoadFailed(true);
-      setError("Seçilmiş işçi qrupu üçün fəaliyyətlər yüklənmədi");
+      if (allActivities.length > 0) {
+        setActivities(allActivities);
+        setSelectedActivityIds(allActivities.map((activity) => activity.id));
+      } else {
+        setActivities([]);
+        setSelectedActivityIds([]);
+        setActivityLoadFailed(true);
+        setError("Fəaliyyətlər yüklənmədi");
+      }
     }
   };
 
@@ -624,7 +645,7 @@ const SurveysPage: React.FC = () => {
                 </h4>
                 {activities.length === 0 ? (
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    İşçi qrupu seçdikdən sonra fəaliyyətlər burada görünəcək.
+                    Fəaliyyət tapılmadı.
                   </p>
                 ) : (
                   <div className="space-y-3">
