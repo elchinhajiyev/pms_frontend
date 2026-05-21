@@ -11,6 +11,7 @@ import surveyQuestionBankService, {
 
 type QuestionFormRow = {
   id: string;
+  question_id?: number;
   question_text: string;
   activity_id: string;
   is_required: boolean;
@@ -26,6 +27,7 @@ const createQuestionRow = (
   index = 0
 ): QuestionFormRow => ({
   id: `${question?.id || "new"}-${Date.now()}-${index}`,
+  question_id: question?.id,
   question_text: question?.question_text || "",
   activity_id: question?.activity_id ? String(question.activity_id) : "",
   is_required: question?.is_required !== false,
@@ -190,6 +192,7 @@ export default function SurveyQuestionBanksPage() {
     description: form.description.trim() || null,
     questions: questions
       .map((question) => ({
+        id: question.question_id,
         question_text: question.question_text.trim(),
         activity_id: question.activity_id ? Number(question.activity_id) : null,
         is_required: question.is_required,
