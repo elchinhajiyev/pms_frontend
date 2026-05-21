@@ -53,6 +53,21 @@ export interface SurveyTeacherResultRow {
   department_name?: string
   voter_count: number
   overall_average_score?: number
+  question_scores?: Array<{
+    question_id: number
+    question_text: string
+    sort_order?: number
+    activity_id?: number | null
+    activity_name?: string | null
+    response_count: number
+    average_score?: number | null
+  }>
+  activity_scores?: Array<{
+    activity_id: number
+    activity_name: string
+    response_count: number
+    average_score?: number | null
+  }>
 }
 
 export interface SurveyTeacherResultsResponse {
