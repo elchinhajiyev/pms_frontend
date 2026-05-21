@@ -24,6 +24,7 @@ export default function SurveyTeacherResultsDetailPage() {
   const [nameFilter, setNameFilter] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("");
   const [expandedTeacherIds, setExpandedTeacherIds] = useState<number[]>([]);
+  const [resetting, setResetting] = useState(false);
 
   const loadData = async () => {
     const id = Number(surveyId);
@@ -111,6 +112,28 @@ export default function SurveyTeacherResultsDetailPage() {
     XLSX.writeFile(workbook, `survey-${survey?.id || "results"}-teacher-results.xlsx`);
   };
 
+  const handleResetResponses = async () => {
+    const id = Number(surveyId);
+    if (!Number.isFinite(id)) return;
+
+    if (!confirm("Bu sorğu üzrə bütün tələbə cavabları silinəcək. Davam edilsin?")) {
+      return;
+    }
+
+    try {
+      setResetting(true);
+      setError("");
+      await surveyService.resetResponses(id);
+      setRows([]);
+      setExpandedTeacherIds([]);
+      await loadData();
+    } catch (err: any) {
+      setError(err?.response?.data?.message || "Sorğu cavabları sıfırlanmadı");
+    } finally {
+      setResetting(false);
+    }
+  };
+
   return (
     <>
       <PageMeta title="Sorğu üzrə nəticələr | Performix" description="Sorğu üzrə müəllim nəticələrinin cədvəli" />
@@ -124,14 +147,23 @@ export default function SurveyTeacherResultsDetailPage() {
               Tədris ili: {survey?.year || "-"} | Semestr: {semesterLabel(survey?.semester)}
             </p>
           </div>
-          <button
-            onClick={handleExportExcel}
-            disabled={rows.length === 0}
-            className="rounded-md bg-emerald-600 px-2 py-2 text-md font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
-          >
-            <div className="flex gap-2 items-center "><RiFileExcel2Line />
-            <span>Excel faylda saxla</span></div>
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={handleResetResponses}
+              disabled={resetting}
+              className="rounded-md border border-red-200 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-60 dark:border-red-900 dark:text-red-300 dark:hover:bg-red-900/20"
+            >
+              {resetting ? "Sıfırlanır..." : "Cavabları sıfırla"}
+            </button>
+            <button
+              onClick={handleExportExcel}
+              disabled={rows.length === 0}
+              className="rounded-md bg-emerald-600 px-2 py-2 text-md font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
+            >
+              <div className="flex gap-2 items-center "><RiFileExcel2Line />
+              <span>Excel faylda saxla</span></div>
+            </button>
+          </div>
         </div>
 
         {error && (

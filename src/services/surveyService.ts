@@ -109,6 +109,11 @@ const surveyService = {
   async getTeacherResultsBySurvey(surveyId: number) {
     const response = await api.get(`/evaluation/surveys/${surveyId}/teacher-results`)
     return response.data as SurveyTeacherResultsResponse
+  },
+
+  async resetResponses(surveyId: number) {
+    const response = await api.delete(`/evaluation/surveys/${surveyId}/responses`)
+    return response.data as { message: string; deleted_count: number }
   }
 }
 
