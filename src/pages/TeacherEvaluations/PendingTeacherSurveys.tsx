@@ -11,7 +11,7 @@ type ScoreMap = Record<number, number>
 
 const toScoreMap = (scores: TeacherSurveySubmittedScore[]): ScoreMap => {
   return scores.reduce((acc, item) => {
-    acc[item.activity_id] = item.score
+    acc[item.question_id] = item.score
     return acc
   }, {} as ScoreMap)
 }
@@ -72,12 +72,12 @@ export default function PendingTeacherSurveys() {
     return semester
   }
 
-  const updateScore = (key: string, activityId: number, value: number) => {
+  const updateScore = (key: string, questionId: number, value: number) => {
     setScores((prev) => ({
       ...prev,
       [key]: {
         ...(prev[key] || {}),
-        [activityId]: value
+        [questionId]: value
       }
     }))
   }
@@ -87,16 +87,17 @@ export default function PendingTeacherSurveys() {
 
     const key = `${item.survey_id}-${item.teacher_id}`
     const selected = scores[key] || {}
-    const payloadScores = item.activities.map((activity) => ({
-      activity_id: activity.activity_id,
-      score: Number(selected[activity.activity_id] || 0)
+    const questions = item.questions || item.activities || []
+    const payloadScores = questions.map((question) => ({
+      question_id: question.question_id,
+      score: Number(selected[question.question_id] || 0)
     }))
 
     const hasInvalid = payloadScores.some(
-      (entry) => ![10, 20, 30, 40, 50].includes(entry.score)
+      (entry) => ![1, 2, 3, 4, 5].includes(entry.score)
     )
     if (hasInvalid) {
-      setError('Bütün fəaliyyətlər üçün 10-50 arası bal seçilməlidir')
+      setError('Bütün suallar üçün 1-5 arası bal seçilməlidir')
       return
     }
 
@@ -186,34 +187,50 @@ export default function PendingTeacherSurveys() {
                         </span>
                       </div>
 
-                      <div className='space-y-3'>
-                        {item.activities.map((activity) => (
-                          <div
-                            key={activity.activity_id}
-                            className='rounded-md border border-gray-200 px-3 py-3 dark:border-gray-700'
-                          >
-                            <p className='mb-3 text-sm font-medium text-gray-700 dark:text-gray-300'>
-                              {activity.activity_name}
-                            </p>
-                            <div className='flex flex-wrap items-center gap-3'>
-                              {[10, 20, 30, 40, 50].map((score) => (
-                                <label
-                                  key={score}
-                                  className='inline-flex cursor-pointer items-center gap-1 rounded-md border border-gray-200 px-2 py-1 text-sm text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700/40'
-                                >
-                                  <input
-                                    type='radio'
-                                    name={`likert-${key}-${activity.activity_id}`}
-                                    checked={selected[activity.activity_id] === score}
-                                    onChange={() => updateScore(key, activity.activity_id, score)}
-                                    className='h-4 w-4'
-                                  />
+                      <div className='overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700'>
+                        <table className='w-full min-w-[640px] text-sm'>
+                          <thead>
+                            <tr className='border-b border-gray-200 bg-gray-50 text-gray-600 dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-300'>
+                              <th className='px-3 py-2 text-left font-medium'>Sual</th>
+                              {[1, 2, 3, 4, 5].map((score) => (
+                                <th key={score} className='w-16 px-2 py-2 text-center font-medium'>
                                   {score}
-                                </label>
+                                </th>
                               ))}
-                            </div>
-                          </div>
+                            </tr>
+                          </thead>
+                          <tbody>
+                        {(item.questions || item.activities || []).map((question, index) => (
+                          <tr
+                            key={question.question_id}
+                            className='border-b border-gray-100 last:border-b-0 dark:border-gray-700'
+                          >
+                            <td className='px-3 py-3 align-top'>
+                              <p className='font-medium text-gray-800 dark:text-white'>
+                                {index + 1}. {question.question_text}
+                              </p>
+                              {question.activity_name && (
+                                <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+                                  Fəaliyyət: {question.activity_name}
+                                </p>
+                              )}
+                            </td>
+                            {[1, 2, 3, 4, 5].map((score) => (
+                              <td key={score} className='px-2 py-3 text-center align-middle'>
+                                <input
+                                  type='radio'
+                                  name={`likert-${key}-${question.question_id}`}
+                                  checked={selected[question.question_id] === score}
+                                  onChange={() => updateScore(key, question.question_id, score)}
+                                  className='h-4 w-4'
+                                  aria-label={`${question.question_text} - ${score}`}
+                                />
+                              </td>
+                            ))}
+                          </tr>
                         ))}
+                          </tbody>
+                        </table>
                       </div>
 
                       <div className='mt-4 flex justify-end'>

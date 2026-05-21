@@ -1,12 +1,16 @@
 import api from './api'
 
 export interface TeacherSurveyActivity {
-  activity_id: number
-  activity_name: string
+  question_id: number
+  question_text: string
+  activity_id?: number | null
+  activity_name?: string | null
+  is_required?: boolean
 }
 
 export interface TeacherSurveySubmittedScore {
-  activity_id: number
+  question_id: number
+  activity_id?: number | null
   score: number
 }
 
@@ -24,6 +28,7 @@ export interface PendingTeacherSurveyItem {
   average_score?: number
   last_rated_at?: string
   activities: TeacherSurveyActivity[]
+  questions?: TeacherSurveyActivity[]
   submitted_scores: TeacherSurveySubmittedScore[]
 }
 
@@ -52,7 +57,7 @@ export interface MyTeacherSurveyItem {
 
 export interface SubmitTeacherSurveyPayload {
   scores: Array<{
-    activity_id: number
+    question_id: number
     score: number
   }>
 }
