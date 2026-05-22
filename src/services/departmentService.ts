@@ -24,6 +24,7 @@ export interface DepartmentMember {
   id: number
   full_name: string
   email: string
+  photo?: string | null
   is_active?: boolean
 }
 

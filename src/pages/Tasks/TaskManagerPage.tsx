@@ -13,12 +13,31 @@ import { FiEdit2, FiInfo, FiTrash2 } from 'react-icons/fi'
 import { MdDeleteForever } from 'react-icons/md'
 import Avatar from '../../components/ui/avatar/Avatar'
 import { useHelperToolOptions } from '../../hooks/useHelperToolOptions'
+import DatePicker from '../../components/form/date-picker'
 
 
 export type TaskManagerView = 'create' | 'list' | 'stats' | 'detail' | 'ratings'
 
 const priorityOptions = ['Aşağı', 'Orta', 'Yüksək']
 const taskStatusOptions = ['Yeni', 'İcrada', 'Tamamlandı', 'Gecikib']
+
+type CreateAssigneeForm = {
+  user_id: string
+  work_description: string
+  related_activity_ids: number[]
+  due_date_mode: 'task' | 'custom'
+  custom_due_date: string
+  is_saved: boolean
+}
+
+const createEmptyAssignee = (): CreateAssigneeForm => ({
+  user_id: '',
+  work_description: '',
+  related_activity_ids: [],
+  due_date_mode: 'task',
+  custom_due_date: '',
+  is_saved: false
+})
 
 const mergeStringValues = (base: string[], extras: Array<string | null | undefined>) => {
   const values = [...base]
@@ -271,21 +290,7 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
     semester: '',
     academic_year: '',
     department_id: '',
-    assignees: [
-      {
-        user_id: '',
-        work_description: '',
-        related_activity_ids: [] as number[],
-        due_date_mode: 'task',
-        custom_due_date: ''
-      }
-    ] as Array<{
-      user_id: string
-      work_description: string
-      related_activity_ids: number[]
-      due_date_mode: 'task' | 'custom'
-      custom_due_date: string
-    }>
+    assignees: [createEmptyAssignee()]
   })
 
   const loadTasks = async () => {
@@ -512,6 +517,32 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
     }
   }
 
+  const getCreateAssigneeMember = (userId?: string) => {
+    return departmentMembers.find((member) => Number(member.id) === Number(userId))
+  }
+
+  const updateCreateAssignee = (
+    index: number,
+    updater: (assignee: CreateAssigneeForm) => CreateAssigneeForm
+  ) => {
+    setCreateForm((prev) => {
+      const next = [...prev.assignees]
+      next[index] = updater(next[index])
+      return { ...prev, assignees: next }
+    })
+  }
+
+  const markCreateAssigneeSaved = (index: number) => {
+    const assignee = createForm.assignees[index]
+    if (!assignee?.user_id) {
+      setError('İcraçı seçin')
+      return
+    }
+
+    setError('')
+    updateCreateAssignee(index, (current) => ({ ...current, is_saved: true }))
+  }
+
   const loadRatingsOverview = async () => {
     if (tasks.length === 0) {
       setRatedTasks([])
@@ -594,7 +625,7 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
 
     try {
       const assignees: TaskAssignmentInput[] = createForm.assignees
-        .filter((item) => String(item.user_id).trim())
+        .filter((item) => item.is_saved && String(item.user_id).trim())
         .map((item) => ({
           user_id: Number(item.user_id),
           work_description: item.work_description,
@@ -604,6 +635,12 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
           due_date_mode: item.due_date_mode,
           custom_due_date: item.due_date_mode === 'custom' ? item.custom_due_date || null : null
         }))
+
+      if (assignees.length === 0) {
+        setError('Ən azı bir icraçını yadda saxlayın')
+        setSaving(false)
+        return
+      }
 
       const res = await taskService.createTask({
         subject: createForm.subject,
@@ -625,15 +662,7 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
         semester: '',
         academic_year: '',
         department_id: '',
-        assignees: [
-          {
-            user_id: '',
-            work_description: '',
-              related_activity_ids: [],
-            due_date_mode: 'task',
-            custom_due_date: ''
-          }
-        ]
+        assignees: [createEmptyAssignee()]
       })
       setSelectedTask(res?.data || null)
       await loadTasks()
@@ -1418,7 +1447,13 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
             {isManager && (
               <select
                 value={createForm.department_id}
-                onChange={(e) => setCreateForm((prev) => ({ ...prev, department_id: e.target.value }))}
+                onChange={(e) =>
+                  setCreateForm((prev) => ({
+                    ...prev,
+                    department_id: e.target.value,
+                    assignees: [createEmptyAssignee()]
+                  }))
+                }
                 className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
               >
                 <option value="">Departament seçin</option>
@@ -1430,12 +1465,12 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
               </select>
             )}
             <div className="space-y-1">
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Son müddət</p>
-              <input
-                type="date"
-                value={createForm.due_date}
-                onChange={(e) => setCreateForm((prev) => ({ ...prev, due_date: e.target.value }))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              <DatePicker
+                id="create-task-due-date"
+                label="Son müddət"
+                placeholder="Tarix seçin"
+                defaultDate={createForm.due_date || undefined}
+                onChange={(_, dateStr) => setCreateForm((prev) => ({ ...prev, due_date: dateStr }))}
               />
             </div>
             <select
@@ -1493,13 +1528,7 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
                     ...prev,
                     assignees: [
                       ...prev.assignees,
-                      {
-                        user_id: '',
-                        work_description: '',
-                        related_activity_ids: [],
-                        due_date_mode: 'task',
-                        custom_due_date: ''
-                      }
+                      createEmptyAssignee()
                     ]
                   }))
                 }
@@ -1511,15 +1540,73 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
 
             {createForm.assignees.map((assignee, index) => (
               <div key={index} className="space-y-3 rounded-xl border border-gray-200 p-4 dark:border-gray-700">
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                {assignee.is_saved && assignee.user_id ? (
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 items-center gap-3">
+                      {(() => {
+                        const member = getCreateAssigneeMember(assignee.user_id)
+                        const photoUrl = resolveAvatarUrl(member?.photo)
+
+                        return (
+                          <>
+                            {photoUrl ? (
+                              <img
+                                src={photoUrl}
+                                alt={member?.full_name || 'İcraçı'}
+                                className="h-11 w-11 shrink-0 rounded-full object-cover"
+                              />
+                            ) : (
+                              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-gray-100 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                                {getInitials(member?.full_name)}
+                              </span>
+                            )}
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-medium text-gray-800 dark:text-white">
+                                {member?.full_name || 'İcraçı'}
+                              </p>
+                              <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+                                {member?.email || '-'}
+                              </p>
+                            </div>
+                          </>
+                        )
+                      })()}
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => updateCreateAssignee(index, (current) => ({ ...current, is_saved: false }))}
+                        className="rounded-md border border-gray-200 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                      >
+                        Düzəliş et
+                      </button>
+                      {createForm.assignees.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setCreateForm((prev) => ({
+                              ...prev,
+                              assignees: prev.assignees.filter((_, currentIndex) => currentIndex !== index)
+                            }))
+                          }
+                          className="rounded-md border border-red-200 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 dark:border-red-900/40 dark:hover:bg-red-900/20"
+                        >
+                          Sil
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                   <select
                     value={assignee.user_id}
                     onChange={(e) =>
-                      setCreateForm((prev) => {
-                        const next = [...prev.assignees]
-                        next[index] = { ...next[index], user_id: e.target.value }
-                        return { ...prev, assignees: next }
-                      })
+                      updateCreateAssignee(index, (current) => ({
+                        ...current,
+                        user_id: e.target.value,
+                        is_saved: false
+                      }))
                     }
                     className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                   >
@@ -1536,14 +1623,11 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
                   <select
                     value={assignee.due_date_mode}
                     onChange={(e) =>
-                      setCreateForm((prev) => {
-                        const next = [...prev.assignees]
-                        next[index] = {
-                          ...next[index],
-                          due_date_mode: e.target.value as 'task' | 'custom'
-                        }
-                        return { ...prev, assignees: next }
-                      })
+                      updateCreateAssignee(index, (current) => ({
+                        ...current,
+                        due_date_mode: e.target.value as 'task' | 'custom',
+                        is_saved: false
+                      }))
                     }
                     className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                   >
@@ -1554,11 +1638,11 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
                 <textarea
                   value={assignee.work_description}
                   onChange={(e) =>
-                    setCreateForm((prev) => {
-                      const next = [...prev.assignees]
-                      next[index] = { ...next[index], work_description: e.target.value }
-                      return { ...prev, assignees: next }
-                    })
+                    updateCreateAssignee(index, (current) => ({
+                      ...current,
+                      work_description: e.target.value,
+                      is_saved: false
+                    }))
                   }
                   placeholder="İcraçının görəcəyi işlər"
                   rows={2}
@@ -1566,7 +1650,7 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
                 />
                 <div className="space-y-2">
                   <label className="text-sm text-gray-700 dark:text-gray-300">Əlaqəli fəaliyyətlər</label>
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <div className="max-h-52 space-y-2 overflow-y-auto rounded-lg border border-gray-100 p-2 dark:border-gray-800">
                     {departmentActivities.map((activity) => {
                       const activityId = Number(activity.id)
                       const isSelected = assignee.related_activity_ids.some(
@@ -1586,15 +1670,17 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
                             type="checkbox"
                             checked={isSelected}
                             onChange={() =>
-                              setCreateForm((prev) => {
-                                const next = [...prev.assignees]
-                                const currentIds = next[index].related_activity_ids
+                              updateCreateAssignee(index, (current) => {
+                                const currentIds = current.related_activity_ids
                                 const updatedIds = isSelected
                                   ? currentIds.filter((id) => Number(id) !== activityId)
                                   : Array.from(new Set([...currentIds.map(Number), activityId]))
 
-                                next[index] = { ...next[index], related_activity_ids: updatedIds }
-                                return { ...prev, assignees: next }
+                                return {
+                                  ...current,
+                                  related_activity_ids: updatedIds,
+                                  is_saved: false
+                                }
                               })
                             }
                             className="h-4 w-4 rounded-full border-gray-300 text-brand-500 focus:ring-brand-500"
@@ -1609,32 +1695,46 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
                   )}
                 </div>
                 {assignee.due_date_mode === 'custom' && (
-                  <input
-                    type="date"
-                    value={assignee.custom_due_date}
-                    onChange={(e) =>
-                      setCreateForm((prev) => {
-                        const next = [...prev.assignees]
-                        next[index] = { ...next[index], custom_due_date: e.target.value }
-                        return { ...prev, assignees: next }
-                      })
-                    }
-                    className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                  />
-                )}
-                {createForm.assignees.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setCreateForm((prev) => ({
-                        ...prev,
-                        assignees: prev.assignees.filter((_, currentIndex) => currentIndex !== index)
+                  <DatePicker
+                    id={`create-assignee-due-date-${index}`}
+                    label="Fərdi müddət"
+                    placeholder="Tarix seçin"
+                    defaultDate={assignee.custom_due_date || undefined}
+                    onChange={(_, dateStr) =>
+                      updateCreateAssignee(index, (current) => ({
+                        ...current,
+                        custom_due_date: dateStr,
+                        is_saved: false
                       }))
                     }
-                    className="text-xs font-medium text-red-600 hover:text-red-700"
-                  >
-                    Bu icraçını sil
-                  </button>
+                  />
+                )}
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      {createForm.assignees.length > 1 ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setCreateForm((prev) => ({
+                              ...prev,
+                              assignees: prev.assignees.filter((_, currentIndex) => currentIndex !== index)
+                            }))
+                          }
+                          className="text-xs font-medium text-red-600 hover:text-red-700"
+                        >
+                          Bu icraçını sil
+                        </button>
+                      ) : (
+                        <span />
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => markCreateAssigneeSaved(index)}
+                        className="rounded-lg bg-gray-900 px-4 py-2 text-xs font-medium text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
+                      >
+                        İcraçını yadda saxla
+                      </button>
+                    </div>
+                  </>
                 )}
               </div>
             ))}
@@ -1646,7 +1746,7 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
               disabled={saving}
               className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-60"
             >
-              {saving ? 'Yaradılır...' : 'Task yarat'}
+              {saving ? 'Yaradılır...' : 'Taskı yadda saxla'}
             </button>
           </div>
         </form>
