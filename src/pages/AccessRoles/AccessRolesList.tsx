@@ -5,6 +5,22 @@ import UserAvatar from "../../components/common/UserAvatar";
 import accessRoleService, { AccessRole } from "../../services/accessRoleService";
 import { userManagementService, User } from "../../services/userService";
 
+const getApiErrorMessage = (error: any, fallback: string) => {
+  const data = error?.response?.data;
+  const parts = [
+    data?.message,
+    data?.error,
+    data?.code ? `Kod: ${data.code}` : "",
+    data?.detail ? `Detal: ${data.detail}` : "",
+    data?.hint ? `Hint: ${data.hint}` : "",
+    data?.table ? `Cədvəl: ${data.table}` : "",
+    data?.column ? `Sütun: ${data.column}` : "",
+    data?.constraint ? `Constraint: ${data.constraint}` : "",
+  ].filter(Boolean);
+
+  return parts.length ? parts.join(" | ") : fallback;
+};
+
 const AccessRolesList: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<AccessRole[]>([]);
@@ -122,9 +138,7 @@ const AccessRolesList: React.FC = () => {
       setShowAccessRoleModal(false);
       await loadAll();
     } catch (e: any) {
-      setAccessRoleFormError(
-        e?.response?.data?.message || "Rol saxlanılmadı"
-      );
+      setAccessRoleFormError(getApiErrorMessage(e, "Rol saxlanılmadı"));
     } finally {
       setSavingAccessRole(false);
     }
@@ -137,7 +151,7 @@ const AccessRolesList: React.FC = () => {
       await accessRoleService.delete(role.id);
       await loadAll();
     } catch (e: any) {
-      setError(e?.response?.data?.message || "Rol silinmədi");
+      setError(getApiErrorMessage(e, "Rol silinmədi"));
     }
   };
 
