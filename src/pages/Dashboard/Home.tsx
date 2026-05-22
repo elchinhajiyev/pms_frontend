@@ -1,16 +1,21 @@
 import EcommerceMetrics from "../../components/ecommerce/EcommerceMetrics";
+import type { ReactNode } from "react";
 import MonthlySalesChart from "../../components/ecommerce/MonthlySalesChart";
 import StatisticsChart from "../../components/ecommerce/StatisticsChart";
 import MonthlyTarget from "../../components/ecommerce/MonthlyTarget";
 import RecentOrders from "../../components/ecommerce/RecentOrders";
 import DemographicCard from "../../components/ecommerce/DemographicCard";
 import PageMeta from "../../components/common/PageMeta";
-import UserAvatar from "../../components/common/UserAvatar";
+import { resolveUserPhotoUrl } from "../../components/common/UserAvatar";
 import { useAuth } from "../../context/AuthContext";
 import {
   FiAward,
+  FiBookOpen,
+  FiBriefcase,
   FiCalendar,
   FiFileText,
+  FiFlag,
+  FiHome,
   FiMail,
   FiMapPin,
   FiPhone,
@@ -73,56 +78,97 @@ const MetricRing = ({
   );
 };
 
+const formatValue = (value?: string | number | boolean | null) => {
+  if (value === undefined || value === null || value === "") return "-";
+  if (typeof value === "boolean") return value ? "Bəli" : "Xeyr";
+  return String(value);
+};
+
+const formatGender = (gender?: string | null) => {
+  const normalized = String(gender || "").toLowerCase();
+  if (["male", "m", "kişi", "kisi"].includes(normalized)) return "Kişi";
+  if (["female", "f", "qadın", "qadin"].includes(normalized)) return "Qadın";
+  return formatValue(gender);
+};
+
+const InfoRow = ({
+  icon,
+  label,
+  value,
+}: {
+  icon: ReactNode;
+  label: string;
+  value?: string | number | boolean | null;
+}) => (
+  <div className="flex gap-3">
+    <span className="mt-0.5 text-emerald-600 dark:text-emerald-400">{icon}</span>
+    <div className="min-w-0">
+      <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
+      <p className="break-words text-sm text-gray-800 dark:text-gray-200">{formatValue(value)}</p>
+    </div>
+  </div>
+);
+
 function EmployeeDashboard() {
   const { user } = useAuth();
   const fullName = [user?.last_name, user?.first_name].filter(Boolean).join(" ") || "İstifadəçi";
   const roleLabel = user?.role_name || user?.role_code || "Əməkdaş";
+  const photoSrc = resolveUserPhotoUrl(user?.photo);
+  const userExtras = user as typeof user & {
+    department_head_name?: string;
+    status_name?: string;
+    status_code?: string;
+  };
+  const departmentHead =
+    userExtras?.department_head_name ||
+    (user?.is_department_head ? fullName : "-");
+  const educationStatus =
+    userExtras?.status_name ||
+    userExtras?.status_code ||
+    (user?.status_id ? String(user.status_id) : "-");
   const bars = [74, 68, 42, 78, 55, 82, 64];
   const linePoints = "0,78 55,64 110,61 165,52 220,58 275,66 330,73 385,62 440,55 495,60 550,49";
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-xl font-normal text-gray-900 dark:text-white">Əməkdaş məlumatları</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Dashboard / Əməkdaş / Detallar</p>
-        </div>
-        <div className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-500 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900 md:w-72">
-          Axtarış
-        </div>
-      </div>
-
       <div className="grid grid-cols-12 gap-5">
         <aside className="col-span-12 space-y-5 lg:col-span-4 xl:col-span-3">
           <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
             <div className="flex flex-col items-center text-center">
-              <div className="rounded-lg bg-emerald-400 p-4">
-                <UserAvatar photo={user?.photo} name={fullName} size="lg" />
+              <div className="aspect-[3/4] w-32 overflow-hidden rounded-lg border border-gray-100 bg-gray-100 shadow-sm dark:border-gray-800 dark:bg-gray-800 sm:w-36">
+                <img
+                  src={photoSrc}
+                  alt={fullName}
+                  className="h-full w-full object-cover"
+                  onError={(event) => {
+                    event.currentTarget.src = resolveUserPhotoUrl(null);
+                  }}
+                />
               </div>
               <h2 className="mt-4 text-base font-normal text-gray-900 dark:text-white">{fullName}</h2>
               <p className="text-xs text-gray-500 dark:text-gray-400">{roleLabel}</p>
               <div className="mt-3 flex items-center gap-2">
-                <span className="rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                <span className="rounded-md bg-gray-100 px-3 py-1 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-300">
                   ID-{user?.id || "000"}
                 </span>
-                <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
-                  Aktiv
+                <span className="rounded-md bg-emerald-100 px-3 py-1 text-xs text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+                  FİN: {formatValue(user?.fin)}
                 </span>
               </div>
             </div>
 
             <div className="mt-5 divide-y divide-gray-100 text-sm dark:divide-gray-800">
               <div className="flex items-center justify-between py-3">
-                <span className="text-gray-500">İş növü</span>
-                <span className="text-gray-800 dark:text-gray-200">Tam ştat</span>
+                <span className="text-gray-500">Departament</span>
+                <span className="text-right text-gray-800 dark:text-gray-200">{formatValue(user?.department_name)}</span>
               </div>
               <div className="flex items-center justify-between py-3">
-                <span className="text-gray-500">İş modeli</span>
-                <span className="text-gray-800 dark:text-gray-200">Hibrid</span>
+                <span className="text-gray-500">Təhsil statusu</span>
+                <span className="text-right text-gray-800 dark:text-gray-200">{educationStatus}</span>
               </div>
               <div className="flex items-center justify-between py-3">
-                <span className="text-gray-500">Qoşulma tarixi</span>
-                <span className="text-gray-800 dark:text-gray-200">14 Fevral 2023</span>
+                <span className="text-gray-500">Departament rəhbəri</span>
+                <span className="text-right text-gray-800 dark:text-gray-200">{departmentHead}</span>
               </div>
             </div>
           </section>
@@ -130,34 +176,39 @@ function EmployeeDashboard() {
           <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
             <h3 className="mb-4 text-sm font-normal text-gray-900 dark:text-white">Şəxsi məlumat</h3>
             <div className="space-y-4 text-sm">
-              <div className="flex gap-3">
-                <FiUser className="mt-0.5 text-emerald-600" />
-                <div>
-                  <p className="text-xs text-gray-500">Rol</p>
-                  <p className="text-gray-800 dark:text-gray-200">{roleLabel}</p>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <FiMail className="mt-0.5 text-emerald-600" />
-                <div>
-                  <p className="text-xs text-gray-500">Email</p>
-                  <p className="break-all text-gray-800 dark:text-gray-200">{user?.email || "-"}</p>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <FiPhone className="mt-0.5 text-emerald-600" />
-                <div>
-                  <p className="text-xs text-gray-500">Telefon</p>
-                  <p className="text-gray-800 dark:text-gray-200">{user?.phone || "-"}</p>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <FiMapPin className="mt-0.5 text-emerald-600" />
-                <div>
-                  <p className="text-xs text-gray-500">Departament</p>
-                  <p className="text-gray-800 dark:text-gray-200">{user?.department_name || "-"}</p>
-                </div>
-              </div>
+              <InfoRow icon={<FiUser />} label="Rol" value={roleLabel} />
+              <InfoRow icon={<FiUser />} label="Cinsiyyət" value={formatGender(user?.gender)} />
+              <InfoRow icon={<FiFlag />} label="Vətəndaşlıq" value={user?.nationality} />
+              <InfoRow icon={<FiMapPin />} label="Qeydiyyat ünvanı" value={user?.registration_address} />
+              <InfoRow icon={<FiHome />} label="Faktiki yaşayış ünvanı" value={user?.current_address} />
+              <InfoRow icon={<FiPhone />} label="Telefon nömrəsi" value={user?.phone} />
+              <InfoRow icon={<FiMail />} label="Email adresi" value={user?.email} />
+            </div>
+          </section>
+
+          <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+            <h3 className="mb-4 text-sm font-normal text-gray-900 dark:text-white">Təhsil məlumatları</h3>
+            <div className="space-y-4 text-sm">
+              <InfoRow icon={<FiBookOpen />} label="Əsas təhsil müəssisəsi" value={user?.education_main_university} />
+              <InfoRow icon={<FiBriefcase />} label="Əsas fakültə" value={user?.education_main_faculty} />
+              <InfoRow
+                icon={<FiCalendar />}
+                label="Əsas təhsil illəri"
+                value={[
+                  user?.education_main_start_year,
+                  user?.education_main_end_year,
+                ].filter(Boolean).join(" - ")}
+              />
+              <InfoRow icon={<FiBookOpen />} label="Əlavə təhsil müəssisəsi" value={user?.education_additional_university} />
+              <InfoRow icon={<FiBriefcase />} label="Əlavə fakültə" value={user?.education_additional_faculty} />
+              <InfoRow
+                icon={<FiCalendar />}
+                label="Əlavə təhsil illəri"
+                value={[
+                  user?.education_additional_start_year,
+                  user?.education_additional_end_year,
+                ].filter(Boolean).join(" - ")}
+              />
             </div>
           </section>
         </aside>
