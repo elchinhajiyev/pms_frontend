@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
 import UserAvatar from "../../components/common/UserAvatar";
+import { IoIosMore } from "react-icons/io";
 import studentGroupService, {
   StudentGroup,
   StudentGroupStudent,
@@ -52,6 +53,7 @@ export default function StudentGroupsList() {
   const [studentsTotal, setStudentsTotal] = useState(0);
   const [studentsLoading, setStudentsLoading] = useState(false);
   const [studentsError, setStudentsError] = useState("");
+  const [expandedSubjectsGroupId, setExpandedSubjectsGroupId] = useState<number | null>(null);
 
   const [groupNumberFilter, setGroupNumberFilter] = useState("");
   const [departmentListSearch, setDepartmentListSearch] = useState("");
@@ -239,6 +241,14 @@ export default function StudentGroupsList() {
 
     return groupMatch && departmentMatch;
   });
+  const expandedSubjectsGroup = filteredGroups.find(
+    (group) => group.id === expandedSubjectsGroupId
+  );
+  const expandedSubjectsText = expandedSubjectsGroup
+    ? expandedSubjectsGroup.teaching_subject_names?.length
+      ? expandedSubjectsGroup.teaching_subject_names.join(", ")
+      : expandedSubjectsGroup.teaching_subject_name || "-"
+    : "";
 
   return (
     <>
@@ -317,68 +327,96 @@ export default function StudentGroupsList() {
         )}
 
         {!loading && filteredGroups.length > 0 && (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-theme-xs dark:border-gray-700 dark:bg-gray-900">
+            <div className="overflow-hidden">
+            <table className="w-full table-auto text-sm">
               <thead>
-                <tr className="border-b border-gray-200 text-left text-gray-600 dark:border-gray-700 dark:text-gray-400">
-                  <th className="pb-3 pr-8 font-medium">Qrup nömrəsi</th>
-                  <th className="pb-3 pr-4 font-medium">Kurs</th>
-                  <th className="pb-3 pr-4 font-medium">Təhsil forması</th>
-                  <th className="pb-3 pr-4 font-medium">Fakültə</th>
-                  <th className="pb-3 pr-4 font-medium">Fənlər</th>
-                  <th className="pb-3 pr-4 font-medium">İxtisas</th>
-                  <th className="pb-3 pr-4 font-medium">Kafedralar</th>
-                  <th className="pb-3 font-medium"></th>
+                <tr className="border-b border-gray-200 bg-gray-25 text-left text-xs font-semibold text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                  <th className="w-1 whitespace-nowrap border-r border-gray-200 px-2 py-2 text-center dark:border-gray-700">ID</th>
+                  <th className="w-1 whitespace-nowrap border-r border-gray-200 px-2 py-2 dark:border-gray-700">Qrup nömrəsi</th>
+                  <th className="w-1 whitespace-nowrap border-r border-gray-200 px-2 py-2 text-center dark:border-gray-700">Kurs</th>
+                  <th className="w-1 whitespace-nowrap border-r border-gray-200 px-2 py-2 dark:border-gray-700">Təhsil forması</th>
+                  <th className="border-r border-gray-200 px-2 py-2 dark:border-gray-700">Fakültə</th>
+                  <th className="border-r border-gray-200 px-2 py-2 dark:border-gray-700">Fənlər</th>
+                  <th className="border-r border-gray-200 px-2 py-2 dark:border-gray-700">İxtisas</th>
+                  <th className="border-r border-gray-200 px-2 py-2 dark:border-gray-700">Kafedralar</th>
+                  <th className="w-1 whitespace-nowrap px-2 py-2 text-center">Əməliyyat</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                 {filteredGroups.map((group) => (
-                  <tr key={group.id} className="border-b border-gray-100 dark:border-gray-700">
-                    <td className="py-3 pr-4 font-medium text-gray-800 dark:text-white">
-                      <div className="flex items-center gap-2">
-                        <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-                          ID {group.id}
-                        </span>
-                        <span>{group.group_number}</span>
-                      </div>
+                  <tr key={group.id} className="bg-white transition-colors hover:bg-gray-25 dark:bg-gray-900 dark:hover:bg-gray-800/70">
+                    <td className="whitespace-nowrap border-r border-gray-100 px-2 py-1.5 text-center font-medium text-gray-600 dark:border-gray-800 dark:text-gray-400">
+                      {group.id}
                     </td>
-                    <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{group.course ?? "-"}</td>
-                    <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">
+                    <td className="whitespace-nowrap border-r border-gray-100 px-2 py-1.5 font-medium text-gray-800 dark:border-gray-800 dark:text-white">
+                      <span className="block truncate">{group.group_number}</span>
+                    </td>
+                    <td className="whitespace-nowrap border-r border-gray-100 px-2 py-1.5 text-center text-gray-600 dark:border-gray-800 dark:text-gray-400">{group.course ?? "-"}</td>
+                    <td className="whitespace-nowrap border-r border-gray-100 px-2 py-1.5 text-gray-600 dark:border-gray-800 dark:text-gray-400">
                       {group.education_type === "EYANI"
                         ? "Əyani"
                         : group.education_type === "QIYABI"
                           ? "Qiyabi"
                           : "-"}
                     </td>
-                    <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{group.faculty_name || "-"}</td>
-                    <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">
-                      {group.teaching_subject_names?.length
-                        ? group.teaching_subject_names.join(", ")
-                        : group.teaching_subject_name || "-"}
+                    <td className="max-w-[150px] border-r border-gray-100 px-2 py-1.5 text-gray-600 dark:border-gray-800 dark:text-gray-400">
+                      <span className="block truncate">{group.faculty_name || "-"}</span>
                     </td>
-                    <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{group.specialty_name || "-"}</td>
-                    <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">
-                      {group.department_names?.length
-                        ? group.department_names.join(", ")
-                        : group.department_name || "-"}
+                    <td className="relative max-w-[180px] border-r border-gray-100 px-2 py-1.5 text-gray-600 dark:border-gray-800 dark:text-gray-400">
+                      {(() => {
+                        const subjectText = group.teaching_subject_names?.length
+                          ? group.teaching_subject_names.join(", ")
+                          : group.teaching_subject_name || "-";
+                        const isExpanded = expandedSubjectsGroupId === group.id;
+
+                        return (
+                          <div className="flex min-w-0 items-center gap-1">
+                            <span className="block min-w-0 flex-1 truncate">{subjectText}</span>
+                            {subjectText !== "-" && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setExpandedSubjectsGroupId(isExpanded ? null : group.id)
+                                }
+                                className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+                                aria-label="Fənləri tam göstər"
+                              >
+                                <IoIosMore className="text-lg" />
+                              </button>
+                            )}
+
+                          </div>
+                        );
+                      })()}
                     </td>
-                    <td className="py-3">
-                      <div className="flex gap-3">
+                    <td className="max-w-[150px] border-r border-gray-100 px-2 py-1.5 text-gray-600 dark:border-gray-800 dark:text-gray-400">
+                      <span className="block truncate">{group.specialty_name || "-"}</span>
+                    </td>
+                    <td className="max-w-[170px] border-r border-gray-100 px-2 py-1.5 text-gray-600 dark:border-gray-800 dark:text-gray-400">
+                      <span className="block truncate">
+                        {group.department_names?.length
+                          ? group.department_names.join(", ")
+                          : group.department_name || "-"}
+                      </span>
+                    </td>
+                    <td className="whitespace-nowrap px-2 py-1.5 text-center">
+                      <div className="inline-flex items-center justify-center gap-1">
                         <button
                           onClick={() => openStudentsModal(group)}
-                          className="text-indigo-600 hover:text-indigo-800"
+                          className="inline-flex items-center justify-center rounded-full border border-gray-200 bg-white px-2 py-1 text-xs font-medium text-gray-700 shadow-theme-xs hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-indigo-900/60 dark:hover:bg-indigo-900/20 dark:hover:text-indigo-300"
                         >
                           Tələbələr
                         </button>
                         <button
                           onClick={() => openEdit(group)}
-                          className="text-gray-500 hover:text-brand-500 dark:text-gray-400"
+                          className="inline-flex items-center justify-center rounded-full border border-gray-200 bg-white px-2 py-1 text-xs font-medium text-gray-700 shadow-theme-xs hover:border-brand-200 hover:bg-brand-50 hover:text-brand-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-brand-900/60 dark:hover:bg-brand-900/20 dark:hover:text-brand-300"
                         >
                           Redaktə
                         </button>
                         <button
                           onClick={() => handleDelete(group.id)}
-                          className="text-red-500 hover:text-red-700"
+                          className="inline-flex items-center justify-center rounded-full border border-gray-200 bg-white px-2 py-1 text-xs font-medium text-gray-700 shadow-theme-xs hover:border-red-200 hover:bg-red-50 hover:text-red-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-red-900/60 dark:hover:bg-red-900/20 dark:hover:text-red-300"
                         >
                           Sil
                         </button>
@@ -388,6 +426,7 @@ export default function StudentGroupsList() {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         )}
       </div>
@@ -624,6 +663,32 @@ export default function StudentGroupsList() {
                 {saving ? "Saxlanılır..." : "Saxla"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {expandedSubjectsGroup && expandedSubjectsText !== "-" && (
+        <div
+          className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/20 p-4"
+          onClick={() => setExpandedSubjectsGroupId(null)}
+        >
+          <div
+            className="w-full max-w-xl rounded-lg border border-gray-200 bg-white p-4 text-sm leading-6 text-gray-700 shadow-theme-xl dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h4 className="text-sm font-semibold text-gray-800 dark:text-white">
+                Fənlər
+              </h4>
+              <button
+                type="button"
+                onClick={() => setExpandedSubjectsGroupId(null)}
+                className="rounded-md border border-gray-200 px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+              >
+                Bağla
+              </button>
+            </div>
+            <p>{expandedSubjectsText}</p>
           </div>
         </div>
       )}

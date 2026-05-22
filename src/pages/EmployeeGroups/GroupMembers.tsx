@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
 import UserAvatar from "../../components/common/UserAvatar";
+import { TrashBinIcon } from "../../icons";
 import { groupMemberService, GroupMember } from "../../services/activityService";
 import { employeeGroupService, EmployeeGroup } from "../../services/evaluationService";
 import accessRoleService, { AccessRole } from "../../services/accessRoleService";
@@ -335,65 +336,77 @@ export default function GroupMembers() {
 
             {/* Members list */}
             <div className="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-800">
-              <h3 className="mb-4 text-base font-semibold text-gray-800 dark:text-white">
-                Qrup üzvləri ({members.length})
-              </h3>
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <h3 className="text-base font-semibold text-gray-800 dark:text-white">
+                  Qrup üzvləri ({members.length})
+                </h3>
+              </div>
 
               {members.length === 0 ? (
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   Bu qrupda hələ üzv yoxdur.
                 </p>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-gray-200 text-left text-gray-600 dark:border-gray-700 dark:text-gray-400">
-                        <th className="pb-3 pr-4 font-medium">Soyad, ad</th>
-                        <th className="pb-3 pr-4 font-medium">E-poçt</th>
-                        <th className="pb-3 pr-4 font-medium">Rol</th>
-                        <th className="pb-3 pr-4 font-medium">FİN</th>
-                        <th className="pb-3 font-medium"></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {members.map((m) => (
-                        <tr
-                          key={m.id}
-                          className="border-b border-gray-100 dark:border-gray-700"
-                        >
-                          <td className="py-3 pr-4 text-gray-800 dark:text-white">
-                            <div className="flex items-center gap-3">
-                              <UserAvatar
-                                photo={m.photo}
-                                name={`${m.last_name} ${m.first_name}`}
-                              />
-                              <span>
-                                {m.last_name} {m.first_name}
-                                {m.middle_name ? ` ${m.middle_name}` : ""}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">
-                            {m.email || "—"}
-                          </td>
-                          <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">
-                            {m.role_name || "—"}
-                          </td>
-                          <td className="py-3 pr-4 font-mono text-gray-600 dark:text-gray-400">
-                            {m.fin || "—"}
-                          </td>
-                          <td className="py-3">
-                            <button
-                              onClick={() => handleRemove(m.id)}
-                              className="text-red-500 hover:text-red-700"
-                            >
-                              Çıxar
-                            </button>
-                          </td>
+                <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-theme-xs dark:border-gray-700 dark:bg-gray-900">
+                  <div className="overflow-visible">
+                    <table className="w-full table-fixed text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-200 bg-gray-25 text-left text-xs font-semibold text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                          <th className="w-[28%] border-r border-gray-200 px-4 py-2 dark:border-gray-700">Üzv</th>
+                          <th className="w-[26%] border-r border-gray-200 px-4 py-2 dark:border-gray-700">E-poçt</th>
+                          <th className="w-[20%] border-r border-gray-200 px-4 py-2 dark:border-gray-700">Rol</th>
+                          <th className="w-[12%] border-r border-gray-200 px-4 py-2 dark:border-gray-700">FİN</th>
+                          <th className="w-[14%] px-4 py-2 text-right">Əməliyyat</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                        {members.map((m) => (
+                          <tr
+                            key={m.id}
+                            className="bg-white transition-colors hover:bg-gray-25 dark:bg-gray-900 dark:hover:bg-gray-800/70"
+                          >
+                            <td className="border-r border-gray-100 px-4 py-1.5 text-gray-800 dark:border-gray-800 dark:text-white">
+                              <div className="flex items-center gap-3">
+                                <UserAvatar
+                                  photo={m.photo}
+                                  name={`${m.last_name} ${m.first_name}`}
+                                  size="sm"
+                                />
+                                <div className="min-w-0">
+                                  <span className="block truncate font-medium text-gray-800 dark:text-white">
+                                    {m.last_name} {m.first_name}
+                                    {m.middle_name ? ` ${m.middle_name}` : ""}
+                                  </span>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="border-r border-gray-100 px-4 py-1.5 text-gray-600 dark:border-gray-800 dark:text-gray-400">
+                              <span className="block truncate">{m.email || "—"}</span>
+                            </td>
+                            <td className="border-r border-gray-100 px-4 py-1.5 dark:border-gray-800">
+                              <span className="inline-flex max-w-full items-center gap-2 rounded-full border border-gray-200 bg-white px-2.5 py-0.5 text-xs font-medium text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                                <span className="h-2.5 w-2.5 shrink-0 rounded-sm bg-success-300" />
+                                <span className="truncate">{m.role_name || "—"}</span>
+                              </span>
+                            </td>
+                            <td className="border-r border-gray-100 px-4 py-1.5 font-mono text-gray-600 dark:border-gray-800 dark:text-gray-400">
+                              {m.fin || "—"}
+                            </td>
+                            <td className="px-4 py-1.5 text-right">
+                              <button
+                                onClick={() => handleRemove(m.id)}
+                                className="inline-flex items-center justify-center gap-1.5 rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 shadow-theme-xs hover:border-red-200 hover:bg-red-50 hover:text-red-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-red-900/60 dark:hover:bg-red-900/20 dark:hover:text-red-300"
+                                aria-label={`${m.last_name} ${m.first_name} qrupdan çıxar`}
+                              >
+                                <TrashBinIcon className="size-4 fill-current" />
+                                <span>Çıxar</span>
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
             </div>

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
 import UserAvatar from "../../components/common/UserAvatar";
+import { CheckCircleIcon, TrashBinIcon } from "../../icons";
 import { userManagementService, userStatusService, User, UserStatus } from "../../services/userService";
 
 export default function AllUsersList() {
@@ -180,62 +181,72 @@ export default function AllUsersList() {
         )}
 
         {!loading && filteredUsers.length > 0 && (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-theme-xs dark:border-gray-700 dark:bg-gray-900">
+            <div className="overflow-x-auto lg:overflow-hidden">
+            <table className="min-w-[860px] table-auto text-sm lg:w-full lg:min-w-0">
               <thead>
-                <tr className="border-b border-gray-200 text-left text-gray-600 dark:border-gray-700 dark:text-gray-400">
-                  <th className="pb-3 pr-4 font-medium">Ad, soyad</th>
-                  <th className="pb-3 pr-4 font-medium">E-poçt</th>
-                  <th className="pb-3 pr-4 font-medium">FİN</th>
-                  <th className="pb-3 pr-4 font-medium">Qrup</th>
-                  <th className="pb-3 pr-4 font-medium">Rol</th>
-                  <th className="pb-3 font-medium"></th>
+                <tr className="border-b border-gray-200 bg-gray-25 text-left text-xs font-normal text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                  <th className="border-r border-gray-200 px-4 py-2 font-normal dark:border-gray-700">Üzv</th>
+                  <th className="border-r border-gray-200 px-4 py-2 font-normal dark:border-gray-700">E-poçt</th>
+                  <th className="border-r border-gray-200 px-4 py-2 font-normal dark:border-gray-700">FİN</th>
+                  <th className="border-r border-gray-200 px-4 py-2 font-normal dark:border-gray-700">Telefon</th>
+                  <th className="border-r border-gray-200 px-4 py-2 font-normal dark:border-gray-700">Qrup</th>
+                  <th className="w-1 whitespace-nowrap border-r border-gray-200 px-4 py-2 text-center font-normal dark:border-gray-700">Rol</th>
+                  <th className="w-1 whitespace-nowrap px-4 py-2 text-center font-normal">Əməliyyat</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                 {filteredUsers.map((user) => (
                   <tr
                     key={user.id}
-                    className="border-b border-gray-100 dark:border-gray-700"
+                    className="bg-white transition-colors hover:bg-gray-25 dark:bg-gray-900 dark:hover:bg-gray-800/70"
                   >
-                    <td className="py-3 pr-4 text-gray-800 dark:text-white">
+                    <td className="border-r border-gray-100 px-4 py-1.5 text-gray-800 dark:border-gray-800 dark:text-white">
                       <div className="flex items-center gap-3">
                         <UserAvatar
                           photo={user.photo}
                           name={`${user.last_name} ${user.first_name}`}
+                          size="sm"
                         />
-                        <span>
-                          {user.last_name} {user.first_name}
-                          {user.middle_name ? ` ${user.middle_name}` : ""}
-                        </span>
+                        <span className="block min-w-0 truncate font-normal">
+                            {user.last_name} {user.first_name}
+                            {user.middle_name ? ` ${user.middle_name}` : ""}
+                          </span>
                       </div>
                     </td>
-                    <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">
-                      {user.email || "—"}
+                    <td className="border-r border-gray-100 px-4 py-1.5 text-gray-600 dark:border-gray-800 dark:text-gray-400">
+                      <span className="block truncate">{user.email || "—"}</span>
                     </td>
-                    <td className="py-3 pr-4 font-mono text-gray-600 dark:text-gray-400">
+                    <td className="whitespace-nowrap border-r border-gray-100 px-4 py-1.5 font-mono text-gray-600 dark:border-gray-800 dark:text-gray-400">
                       {user.fin || "—"}
                     </td>
-                    <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">
-                      {user.group_name || "—"}
+                    <td className="whitespace-nowrap border-r border-gray-100 px-4 py-1.5 text-gray-600 dark:border-gray-800 dark:text-gray-400">
+                      {user.phone || "—"}
                     </td>
-                    <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">
-                      {user.role_name || user.role_code || "—"}
+                    <td className="border-r border-gray-100 px-4 py-1.5 text-gray-600 dark:border-gray-800 dark:text-gray-400">
+                      <span className="block truncate">{user.group_name || "—"}</span>
                     </td>
-                    <td className="py-3">
-                      <div className="flex items-center gap-3">
+                    <td className="whitespace-nowrap border-r border-gray-100 px-4 py-1.5 text-center dark:border-gray-800">
+                      <span className="inline-flex items-center justify-center rounded-md bg-gray-100 px-2.5 py-1 text-xs font-normal text-gray-700 ring-1 ring-inset ring-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:ring-gray-700">
+                        {user.role_name || user.role_code || "—"}
+                      </span>
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-1.5 text-center">
+                      <div className="inline-flex items-center justify-center gap-2">
                         <button
                           onClick={() => openStatusModal(user)}
-                          className="text-brand-500 hover:text-brand-700 dark:text-brand-400"
+                          className="inline-flex items-center justify-center gap-1.5 rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs font-normal text-gray-700 shadow-theme-xs hover:border-brand-200 hover:bg-brand-50 hover:text-brand-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-brand-900/60 dark:hover:bg-brand-900/20 dark:hover:text-brand-300"
                         >
-                          Təhsil statusu dəyiş
+                          <CheckCircleIcon className="size-4 fill-current" />
+                          <span>Status</span>
                         </button>
                         <button
                           onClick={() => handleDeleteUser(user)}
                           disabled={deletingUserId === user.id}
-                          className="text-red-500 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                          className="inline-flex items-center justify-center gap-1.5 rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs font-normal text-gray-700 shadow-theme-xs hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-red-900/60 dark:hover:bg-red-900/20 dark:hover:text-red-300"
                         >
-                          {deletingUserId === user.id ? "Silinir..." : "Sil"}
+                          <TrashBinIcon className="size-4 fill-current" />
+                          <span>{deletingUserId === user.id ? "Silinir..." : "Sil"}</span>
                         </button>
                       </div>
                     </td>
@@ -243,6 +254,7 @@ export default function AllUsersList() {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         )}
       </div>

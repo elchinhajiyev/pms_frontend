@@ -173,57 +173,58 @@ export default function EmployeeGroupsList() {
         )}
 
         {!loading && groups.length > 0 && (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-theme-xs dark:border-gray-700 dark:bg-gray-900">
+            <div className="overflow-hidden">
+            <table className="w-full table-auto text-sm">
               <thead>
-                <tr className="border-b border-gray-200 text-left text-gray-600 dark:border-gray-700 dark:text-gray-400">
-                  <th className="pb-3 pr-4 font-medium">Kod</th>
-                  <th className="pb-3 pr-4 font-medium">Ad</th>
-                  <th className="pb-3 pr-4 font-medium">Ad (EN)</th>
-                  <th className="pb-3 pr-4 font-medium">Üzv sayı</th>
-                  <th className="pb-3 pr-4 font-medium">Üzvlər</th>
-                  <th className="pb-3 font-medium"></th>
+                <tr className="border-b border-gray-200 bg-gray-25 text-left text-xs font-semibold text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                  <th className="w-1 whitespace-nowrap border-r border-gray-200 px-2 py-2 dark:border-gray-700">Kod</th>
+                  <th className="border-r border-gray-200 px-2 py-2 dark:border-gray-700">Ad</th>
+                  <th className="border-r border-gray-200 px-2 py-2 dark:border-gray-700">Ad (EN)</th>
+                  <th className="w-1 whitespace-nowrap border-r border-gray-200 px-2 py-2 text-center dark:border-gray-700">Üzv sayı</th>
+                  <th className="w-1 whitespace-nowrap border-r border-gray-200 px-2 py-2 text-center dark:border-gray-700">Üzvlər</th>
+                  <th className="w-1 whitespace-nowrap px-2 py-2 text-center">Əməliyyat</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                 {groups.map((g) => (
                   <tr
                     key={g.id}
-                    className="border-b border-gray-100 dark:border-gray-700"
+                    className="bg-white transition-colors hover:bg-gray-25 dark:bg-gray-900 dark:hover:bg-gray-800/70"
                   >
-                    <td className="py-3 pr-4 font-mono text-gray-700 dark:text-gray-300">
+                    <td className="whitespace-nowrap border-r border-gray-100 px-2 py-1.5 font-mono text-gray-700 dark:border-gray-800 dark:text-gray-300">
                       {g.code}
                     </td>
-                    <td className="py-3 pr-4 text-gray-800 dark:text-white">
-                      {g.name}
+                    <td className="max-w-[240px] border-r border-gray-100 px-2 py-1.5 text-gray-800 dark:border-gray-800 dark:text-white">
+                      <span className="block truncate font-medium">{g.name}</span>
                     </td>
-                    <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">
-                      {g.name_en || "—"}
+                    <td className="max-w-[220px] border-r border-gray-100 px-2 py-1.5 text-gray-600 dark:border-gray-800 dark:text-gray-400">
+                      <span className="block truncate">{g.name_en || "—"}</span>
                     </td>
-                    <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">
-                      <span className="inline-flex items-center justify-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+                    <td className="whitespace-nowrap border-r border-gray-100 px-2 py-1.5 text-center text-gray-600 dark:border-gray-800 dark:text-gray-400">
+                      <span className="inline-flex items-center justify-center rounded-md bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700 ring-1 ring-inset ring-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:ring-gray-700">
                         {g.member_count || 0}
                       </span>
                     </td>
-                    <td className="py-3 pr-4">
+                    <td className="whitespace-nowrap border-r border-gray-100 px-2 py-1.5 text-center dark:border-gray-800">
                       <button
                         onClick={() => navigate(`/employee-groups/${g.id}/members`)}
-                        className="text-brand-500 hover:underline"
+                        className="inline-flex items-center justify-center rounded-full border border-gray-200 bg-white px-2 py-1 text-xs font-medium text-gray-700 shadow-theme-xs hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-indigo-900/60 dark:hover:bg-indigo-900/20 dark:hover:text-indigo-300"
                       >
                         Üzvlər
                       </button>
                     </td>
-                    <td className="py-3">
-                      <div className="flex gap-3">
+                    <td className="whitespace-nowrap px-2 py-1.5 text-center">
+                      <div className="inline-flex items-center justify-center gap-1">
                         <button
                           onClick={() => openEdit(g)}
-                          className="text-gray-500 hover:text-brand-500 dark:text-gray-400"
+                          className="inline-flex items-center justify-center rounded-full border border-gray-200 bg-white px-2 py-1 text-xs font-medium text-gray-700 shadow-theme-xs hover:border-brand-200 hover:bg-brand-50 hover:text-brand-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-brand-900/60 dark:hover:bg-brand-900/20 dark:hover:text-brand-300"
                         >
                           Redaktə
                         </button>
                         <button
                           onClick={() => handleDelete(g.id)}
-                          className="text-red-500 hover:text-red-700"
+                          className="inline-flex items-center justify-center rounded-full border border-gray-200 bg-white px-2 py-1 text-xs font-medium text-gray-700 shadow-theme-xs hover:border-red-200 hover:bg-red-50 hover:text-red-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-red-900/60 dark:hover:bg-red-900/20 dark:hover:text-red-300"
                         >
                           Sil
                         </button>
@@ -233,6 +234,7 @@ export default function EmployeeGroupsList() {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         )}
       </div>
