@@ -8,9 +8,9 @@ import { useAuth } from '../../context/AuthContext'
 import { API_ORIGIN } from '../../services/api'
 import { useNavigate, useParams } from 'react-router'
 import { IoMdArrowRoundBack } from "react-icons/io";
+import { IoIosMore } from 'react-icons/io'
 import { IoCheckmarkCircleOutline, IoCloseCircleOutline } from 'react-icons/io5'
-import { FiEdit2, FiInfo, FiTrash2 } from 'react-icons/fi'
-import { MdDeleteForever } from 'react-icons/md'
+import { FiTrash2 } from 'react-icons/fi'
 import Avatar from '../../components/ui/avatar/Avatar'
 import { useHelperToolOptions } from '../../hooks/useHelperToolOptions'
 import DatePicker from '../../components/form/date-picker'
@@ -245,6 +245,7 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
   const [ratingsSemesterFilter, setRatingsSemesterFilter] = useState('')
   const [ratingsTaskFilter, setRatingsTaskFilter] = useState('')
   const [expandedRaters, setExpandedRaters] = useState<Set<number>>(new Set())
+  const [expandedTaskId, setExpandedTaskId] = useState<number | null>(null)
   const [ratings, setRatings] = useState<Record<number, Record<number, number>>>({})
   const [ratingSavingAssignmentId, setRatingSavingAssignmentId] = useState<number | null>(null)
   const [editModalLoading, setEditModalLoading] = useState(false)
@@ -1065,6 +1066,8 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
     )
   }, [filteredTasks, academicYearFilter])
 
+  const expandedTask = visibleTasks.find((task) => Number(task.id) === Number(expandedTaskId))
+
   const semesterOptions = useMemo(
     () => mergeStringValues(helperSemesters, [createForm.semester, editTaskModal.semester]),
     [createForm.semester, editTaskModal.semester, helperSemesters]
@@ -1798,231 +1801,242 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
               Task tapılmadı.
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {visibleTasks.map((task) => (
-                <div
-                  key={task.id}
-                  className="relative h-full rounded-2xl border border-gray-200 bg-white p-5 pb-16 shadow-sm transition-shadow duration-200 hover:shadow-md dark:border-gray-800 dark:bg-gray-900"
-                >
-                  {(() => {
-                    const progress = getTaskProgress(task)
-                    const assignees = Array.isArray(task.assignments) ? task.assignments : []
-                    const avatarItems = assignees.slice(0, 4)
-                    const extraCount = Math.max(assignees.length - avatarItems.length, 0)
+            <div className="overflow-x-auto lg:overflow-visible">
+              <div className="min-w-[980px] rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+                <table className="w-full table-auto text-left text-xs text-gray-700 dark:text-gray-300">
+                  <thead className="bg-gray-50 text-gray-500 dark:bg-gray-900 dark:text-gray-400">
+                    <tr className="border-b border-gray-100 dark:border-gray-800">
+                      <th className="whitespace-nowrap border-r border-gray-100 px-2 py-2 font-normal dark:border-gray-800">Tapşırığı verən</th>
+                      <th className="whitespace-nowrap border-r border-gray-100 px-2 py-2 font-normal dark:border-gray-800">Tapşırığın adı</th>
+                      <th className="whitespace-nowrap border-r border-gray-100 px-2 py-2 text-center font-normal dark:border-gray-800">Yaradılıb</th>
+                      <th className="whitespace-nowrap border-r border-gray-100 px-2 py-2 text-center font-normal dark:border-gray-800">Tamamlanmış</th>
+                      <th className="whitespace-nowrap border-r border-gray-100 px-2 py-2 text-center font-normal dark:border-gray-800">İcraçı sayı</th>
+                      <th className="whitespace-nowrap border-r border-gray-100 px-2 py-2 font-normal dark:border-gray-800">Proqress faizi</th>
+                      <th className="whitespace-nowrap border-r border-gray-100 px-2 py-2 text-center font-normal dark:border-gray-800">Son müddət</th>
+                      <th className="whitespace-nowrap border-r border-gray-100 px-2 py-2 text-center font-normal dark:border-gray-800">İstifadəçilər</th>
+                      <th className="whitespace-nowrap px-2 py-2 text-center font-normal">Ətraflı</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visibleTasks.map((task) => {
+                      const progress = getTaskProgress(task)
+                      const assignees = Array.isArray(task.assignments) ? task.assignments : []
+                      const avatarItems = assignees.slice(0, 4)
+                      const extraCount = Math.max(assignees.length - avatarItems.length, 0)
+                      const isExpanded = Number(expandedTaskId) === Number(task.id)
 
-                    return (
-                      <>
-                        <div className="mb-4 overflow-hidden rounded-xl border border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
-                          <img
-                            src="/4892463.jpg"
-                            alt="Task cover"
-                            className="h-32 w-full object-cover"
-                            loading="lazy"
-                          />
-                        </div>
-
-                        <div className="mb-4">
-                          <div className="flex items-center justify-between text-xs font-medium">
-                            <span className="text-gray-500 dark:text-gray-400">Proqres</span>
-                            <span className="text-gray-700 dark:text-gray-200">
-                              {progress.percent}% ({progress.completed}/{progress.total})
-                            </span>
-                          </div>
-                          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-800">
-                            <div
-                              className="h-full rounded-full bg-brand-500 transition-all duration-300"
-                              style={{ width: `${progress.percent}%` }}
-                            />
-                          </div>
-                        </div>
-
-                        <div className="flex flex-wrap items-start justify-between gap-4">
-                          <div>
-                            <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
-                              {task.subject}
-                            </h3>
-                            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                              {task.department_name || '-'}
-                            </p>
-                          </div>
-                          <div className="flex flex-wrap gap-2 text-xs font-medium">
-                            <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                              {task.priority || 'Prioritet yoxdur'}
-                            </span>
-                            <span className={`rounded-full px-3 py-1 ${getTaskStatusBadgeClass(task.status)}`}>
-                              {task.status}
-                            </span>
-                          </div>
-                        </div>
-
-                        <p className="mt-3 text-sm text-gray-600 dark:text-gray-300 line-clamp-3">
-                          {task.description || 'Təsvir yoxdur'}
-                        </p>
-
-                        <div className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
-                          <div>
-                            <p className="text-gray-500 dark:text-gray-400">Müddət</p>
-                            <p className="font-medium text-gray-800 dark:text-white">
-                              {toDisplayDate(task.due_date)}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-gray-500 dark:text-gray-400">İcraçı</p>
-                            <p className="font-medium text-gray-800 dark:text-white">
-                              {task.assignee_count || 0}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-gray-500 dark:text-gray-400">Tamamlanmış</p>
-                            <p className="font-medium text-gray-800 dark:text-white">
-                              {task.completed_assignee_count || 0}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-gray-500 dark:text-gray-400">Yaradılıb</p>
-                            <p className="font-medium text-gray-800 dark:text-white">
-                              {toDisplayDate(task.created_at)}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="absolute bottom-4 left-4 flex flex-wrap items-center gap-2">
-                          <div className="group relative">
-                            <button
-                              type="button"
-                              onClick={() => navigate(`/tasks/taskDetails/${task.id}`)}
-                              className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300"
-                            >
-                              <FiInfo className="text-base" />
-                            </button>
-                            <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 rounded-md bg-gray-900 px-2 py-1 text-[10px] font-medium text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100 dark:bg-gray-100 dark:text-gray-900">
-                              Ətraflı
-                            </span>
-                          </div>
-                          {task.deleted_at ? (
-                            isManager ? (
-                              <button
-                                type="button"
-                                onClick={() => handleRestoreTask(task.id)}
-                                className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
-                              >
-                                Bərpa et
-                              </button>
-                            ) : null
-                          ) : Number(task.created_by) === Number(user?.id) ? (
-                            <>
-                              <div className="group relative">
+                      return (
+                        <tr
+                          key={task.id}
+                          className="border-b border-gray-100 bg-white text-[13px] transition-colors last:border-b-0 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800/60"
+                        >
+                          <td className="max-w-[150px] border-r border-gray-100 px-2 py-2 text-gray-700 dark:border-gray-800 dark:text-gray-300">
+                            <span className="block truncate">{task.created_by_name || '-'}</span>
+                          </td>
+                          <td className="max-w-[220px] border-r border-gray-100 px-2 py-2 text-gray-700 dark:border-gray-800 dark:text-gray-300">
+                            <div className="flex min-w-0 items-center gap-1">
+                              <span className="block min-w-0 flex-1 truncate">{task.subject || '-'}</span>
+                              {task.subject && (
                                 <button
                                   type="button"
-                                  onClick={() => void openEditTaskModal(task)}
-                                  className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-amber-500 text-white hover:bg-amber-600"
+                                  onClick={() => setExpandedTaskId(isExpanded ? null : Number(task.id))}
+                                  className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+                                  aria-label="Tapşırığı tam göstər"
                                 >
-                                  <FiEdit2 className="text-base" />
+                                  <IoIosMore className="text-lg" />
                                 </button>
-                                <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 rounded-md bg-gray-900 px-2 py-1 text-[10px] font-medium text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100 dark:bg-gray-100 dark:text-gray-900">
-                                  Redaktə et
-                                </span>
-                              </div>
-                              <div className="group relative">
-                                <button
-                                  type="button"
-                                  onClick={() => handleDeleteTask(task.id)}
-                                  className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-red-600 text-white hover:bg-red-700"
-                                >
-                                  <FiTrash2 className="text-base" />
-                                </button>
-                                <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 rounded-md bg-gray-900 px-2 py-1 text-[10px] font-medium text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100 dark:bg-gray-100 dark:text-gray-900">
-                                  Səbətə göndər
-                                </span>
-                              </div>
-                              <div className="group relative">
-                                <button
-                                  type="button"
-                                  onClick={() => handleHardDeleteTask(task.id)}
-                                  className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-red-800 text-white hover:bg-red-900"
-                                >
-                                  <MdDeleteForever className="text-base" />
-                                </button>
-                                <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 rounded-md bg-gray-900 px-2 py-1 text-[10px] font-medium text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100 dark:bg-gray-100 dark:text-gray-900">
-                                  Sil
-                                </span>
-                              </div>
-                            </>
-                          ) : null}
-                        </div>
-
-                        <div className="absolute bottom-4 right-4 flex items-center justify-end gap-2">
-                          <div className="flex items-center">
-                            {avatarItems.map((assignee, index) => {
-                              const avatarUrl = resolveAvatarUrl(assignee.user_photo)
-                              const name = String(assignee.user_name || 'İcraçı').trim()
-                              const roleLabel = String(assignee.role_name || assignee.role_code || 'İcraçı').trim()
-                              const profileLink = buildProfileLink(assignee.user_id)
-
-                              return (
+                              )}
+                            </div>
+                          </td>
+                          <td className="whitespace-nowrap border-r border-gray-100 px-2 py-2 text-center text-gray-600 dark:border-gray-800 dark:text-gray-400">
+                            {toDisplayDate(task.created_at)}
+                          </td>
+                          <td className="whitespace-nowrap border-r border-gray-100 px-2 py-2 text-center text-gray-600 dark:border-gray-800 dark:text-gray-400">
+                            {progress.completed}
+                          </td>
+                          <td className="whitespace-nowrap border-r border-gray-100 px-2 py-2 text-center text-gray-600 dark:border-gray-800 dark:text-gray-400">
+                            {progress.total}
+                          </td>
+                          <td className="min-w-[130px] border-r border-gray-100 px-2 py-2 dark:border-gray-800">
+                            <div className="flex items-center gap-2">
+                              <div className="h-1.5 min-w-16 flex-1 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
                                 <div
-                                  key={`${task.id}-${assignee.id}-${assignee.user_id || index}`}
-                                  className={`group relative ${index === 0 ? '' : '-ml-4'}`}
-                                >
-                                  <button
-                                    type="button"
-                                    onClick={() => navigate(profileLink)}
-                                    className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-gray-200 text-[10px] font-semibold text-gray-700 transition-transform duration-150 hover:scale-105 dark:border-gray-900 dark:bg-gray-800 dark:text-gray-200"
-                                    title={name}
-                                  >
-                                    {avatarUrl ? (
-                                      <Avatar src={avatarUrl} alt={name} size="medium" status="none" />
-                                    ) : (
-                                      <span>{getInitials(name)}</span>
-                                    )}
-                                  </button>
+                                  className="h-full rounded-full bg-brand-500"
+                                  style={{ width: `${progress.percent}%` }}
+                                />
+                              </div>
+                              <span className="w-9 text-right text-gray-600 dark:text-gray-400">{progress.percent}%</span>
+                            </div>
+                          </td>
+                          <td className="whitespace-nowrap border-r border-gray-100 px-2 py-2 text-center text-gray-600 dark:border-gray-800 dark:text-gray-400">
+                            {toDisplayDate(task.due_date)}
+                          </td>
+                          <td className="whitespace-nowrap border-r border-gray-100 px-2 py-2 text-center dark:border-gray-800">
+                            <div className="inline-flex items-center justify-center">
+                              {avatarItems.map((assignee, index) => {
+                                const avatarUrl = resolveAvatarUrl(assignee.user_photo)
+                                const name = String(assignee.user_name || 'İcraçı').trim()
+                                const roleLabel = String(assignee.role_name || assignee.role_code || 'İcraçı').trim()
+                                const profileLink = buildProfileLink(assignee.user_id)
 
-                                  <div className="absolute bottom-full left-1/2 z-20 mb-2 hidden w-56 -translate-x-1/2 rounded-xl border border-gray-200 bg-white p-3 shadow-lg group-hover:block dark:border-gray-700 dark:bg-gray-900">
-                                    <div className="flex items-center gap-3">
-                                      <button
-                                        type="button"
-                                        onClick={() => navigate(profileLink)}
-                                        className="shrink-0"
-                                      >
+                                return (
+                                  <div
+                                    key={`${task.id}-${assignee.id}-${assignee.user_id || index}`}
+                                    className={`group relative ${index === 0 ? '' : '-ml-3'}`}
+                                  >
+                                    <button
+                                      type="button"
+                                      onClick={() => navigate(profileLink)}
+                                      className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-gray-200 text-[10px] font-medium text-gray-700 transition-transform duration-150 hover:scale-105 dark:border-gray-900 dark:bg-gray-800 dark:text-gray-200"
+                                      title={name}
+                                    >
+                                      {avatarUrl ? (
+                                        <Avatar src={avatarUrl} alt={name} size="small" status="none" />
+                                      ) : (
+                                        <span>{getInitials(name)}</span>
+                                      )}
+                                    </button>
+
+                                    <div className="absolute bottom-full left-1/2 z-[9999] mb-2 hidden w-56 -translate-x-1/2 rounded-xl border border-gray-200 bg-white p-3 text-left shadow-lg group-hover:block dark:border-gray-700 dark:bg-gray-900">
+                                      <div className="flex items-center gap-3">
                                         {avatarUrl ? (
                                           <Avatar src={avatarUrl} alt={name} size="small" status="none" />
                                         ) : (
-                                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-[10px] font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-[10px] font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-200">
                                             {getInitials(name)}
                                           </div>
                                         )}
-                                      </button>
-                                      <div className="min-w-0 flex-1">
-                                        <button
-                                          type="button"
-                                          onClick={() => navigate(profileLink)}
-                                          className="block w-full truncate text-left text-sm font-semibold text-gray-800 hover:text-brand-500 dark:text-white"
-                                        >
-                                          {name || 'İcraçı'}
-                                        </button>
-                                        <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
-                                          {roleLabel || 'İcraçı'}
-                                        </p>
+                                        <div className="min-w-0 flex-1">
+                                          <button
+                                            type="button"
+                                            onClick={() => navigate(profileLink)}
+                                            className="block w-full truncate text-left text-sm font-medium text-gray-800 hover:text-brand-500 dark:text-white"
+                                          >
+                                            {name || 'İcraçı'}
+                                          </button>
+                                          <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
+                                            {roleLabel || 'İcraçı'}
+                                          </p>
+                                        </div>
                                       </div>
                                     </div>
                                   </div>
+                                )
+                              })}
+                              {extraCount > 0 && (
+                                <div className="-ml-3 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-brand-500 text-[10px] font-medium text-white dark:border-gray-900">
+                                  +{extraCount}
                                 </div>
-                              )
-                            })}
-                          </div>
-                          {extraCount > 0 && (
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-brand-500 text-[10px] font-semibold text-white dark:border-gray-900">
-                              +{extraCount}
+                              )}
                             </div>
-                          )}
-                        </div>
-                      </>
-                    )
-                  })()}
-                </div>
-            ))}
+                          </td>
+                          <td className="whitespace-nowrap px-2 py-2 text-center">
+                            <button
+                              type="button"
+                              onClick={() => navigate(`/tasks/taskDetails/${task.id}`)}
+                              className="inline-flex items-center justify-center rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-medium text-gray-700 shadow-theme-xs hover:border-brand-200 hover:bg-brand-50 hover:text-brand-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-brand-900/60 dark:hover:bg-brand-900/20 dark:hover:text-brand-300"
+                            >
+                              Ətraflı
+                            </button>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
+        </div>
+      )}
+
+      {expandedTask && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setExpandedTaskId(null)}
+        >
+          <div
+            className="w-full max-w-lg rounded-lg bg-white p-5 shadow-2xl dark:bg-gray-900"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="mb-4 flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Tapşırığın adı</p>
+                <h3 className="mt-1 text-base font-medium text-gray-900 dark:text-white">
+                  {expandedTask.subject || '-'}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setExpandedTaskId(null)}
+                className="rounded-md bg-gray-100 px-3 py-1 text-xs text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300"
+              >
+                Bağla
+              </button>
+            </div>
+            <div className="space-y-3 text-sm">
+              <div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Təsvir</p>
+                <p className="mt-1 whitespace-pre-wrap text-gray-700 dark:text-gray-300">
+                  {expandedTask.description || 'Təsvir yoxdur'}
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Tapşırığı verən</p>
+                  <p className="mt-1 text-gray-800 dark:text-gray-200">{expandedTask.created_by_name || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Departament</p>
+                  <p className="mt-1 text-gray-800 dark:text-gray-200">{expandedTask.department_name || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Prioritet</p>
+                  <p className="mt-1 text-gray-800 dark:text-gray-200">{expandedTask.priority || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Status</p>
+                  <span className={`mt-1 inline-flex rounded-full px-3 py-1 text-xs ${getTaskStatusBadgeClass(expandedTask.status)}`}>
+                    {expandedTask.status || '-'}
+                  </span>
+                </div>
+              </div>
+            </div>
+            {!expandedTask.deleted_at && Number(expandedTask.created_by) === Number(user?.id) && (
+              <div className="mt-5 flex flex-wrap justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setExpandedTaskId(null)
+                    void openEditTaskModal(expandedTask)
+                  }}
+                  className="rounded-lg bg-amber-500 px-4 py-2 text-xs font-medium text-white hover:bg-amber-600"
+                >
+                  Redaktə et
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setExpandedTaskId(null)
+                    handleDeleteTask(expandedTask.id)
+                  }}
+                  className="rounded-lg bg-red-600 px-4 py-2 text-xs font-medium text-white hover:bg-red-700"
+                >
+                  Səbətə göndər
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setExpandedTaskId(null)
+                    handleHardDeleteTask(expandedTask.id)
+                  }}
+                  className="rounded-lg bg-red-800 px-4 py-2 text-xs font-medium text-white hover:bg-red-900"
+                >
+                  Sil
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
