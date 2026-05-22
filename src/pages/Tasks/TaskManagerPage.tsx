@@ -250,6 +250,8 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
   const [editModalLoading, setEditModalLoading] = useState(false)
   const [editDepartmentMembers, setEditDepartmentMembers] = useState<DepartmentMember[]>([])
   const [editDepartmentActivities, setEditDepartmentActivities] = useState<DepartmentActivity[]>([])
+  const [createActivitySearch, setCreateActivitySearch] = useState('')
+  const [editActivitySearch, setEditActivitySearch] = useState('')
   const [editTaskModal, setEditTaskModal] = useState<{
     isOpen: boolean
     taskId: number | null
@@ -273,15 +275,7 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
     status: 'Yeni',
     department_id: ''
   })
-  const [editAssignees, setEditAssignees] = useState<
-    Array<{
-      user_id: string
-      work_description: string
-      related_activity_ids: number[]
-      due_date_mode: 'task' | 'custom'
-      custom_due_date: string
-    }>
-  >([])
+  const [editAssignees, setEditAssignees] = useState<CreateAssigneeForm[]>([])
   const [createForm, setCreateForm] = useState({
     subject: '',
     description: '',
@@ -521,6 +515,10 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
     return departmentMembers.find((member) => Number(member.id) === Number(userId))
   }
 
+  const getEditAssigneeMember = (userId?: string) => {
+    return editDepartmentMembers.find((member) => Number(member.id) === Number(userId))
+  }
+
   const updateCreateAssignee = (
     index: number,
     updater: (assignee: CreateAssigneeForm) => CreateAssigneeForm
@@ -541,6 +539,28 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
 
     setError('')
     updateCreateAssignee(index, (current) => ({ ...current, is_saved: true }))
+  }
+
+  const updateEditAssignee = (
+    index: number,
+    updater: (assignee: CreateAssigneeForm) => CreateAssigneeForm
+  ) => {
+    setEditAssignees((prev) => {
+      const next = [...prev]
+      next[index] = updater(next[index])
+      return next
+    })
+  }
+
+  const markEditAssigneeSaved = (index: number) => {
+    const assignee = editAssignees[index]
+    if (!assignee?.user_id) {
+      setError('İcraçı seçin')
+      return
+    }
+
+    setError('')
+    updateEditAssignee(index, (current) => ({ ...current, is_saved: true }))
   }
 
   const loadRatingsOverview = async () => {
@@ -949,17 +969,10 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
                 assignment.custom_due_date &&
                 toDisplayDate(assignment.custom_due_date) !== '-'
                   ? toDisplayDate(assignment.custom_due_date)
-                  : ''
+                  : '',
+              is_saved: true
             }))
-          : [
-              {
-                user_id: '',
-                work_description: '',
-                related_activity_ids: [],
-                due_date_mode: 'task',
-                custom_due_date: ''
-              }
-            ]
+          : [createEmptyAssignee()]
       )
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Task redaktə məlumatları yüklənmədi')
@@ -978,7 +991,7 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
 
     try {
       const assignees: TaskAssignmentInput[] = editAssignees
-        .filter((item) => String(item.user_id).trim())
+        .filter((item) => item.is_saved && String(item.user_id).trim())
         .map((item) => ({
           user_id: Number(item.user_id),
           work_description: item.work_description,
@@ -989,6 +1002,12 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
           custom_due_date:
             item.due_date_mode === 'custom' ? item.custom_due_date || null : null
         }))
+
+      if (assignees.length === 0) {
+        setError('Ən azı bir icraçını yadda saxlayın')
+        setSaving(false)
+        return
+      }
 
       await taskService.updateTask(editTaskModal.taskId, {
         subject: editTaskModal.subject,
@@ -1448,11 +1467,14 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
               <select
                 value={createForm.department_id}
                 onChange={(e) =>
-                  setCreateForm((prev) => ({
-                    ...prev,
-                    department_id: e.target.value,
-                    assignees: [createEmptyAssignee()]
-                  }))
+                  {
+                    setCreateActivitySearch('')
+                    setCreateForm((prev) => ({
+                      ...prev,
+                      department_id: e.target.value,
+                      assignees: [createEmptyAssignee()]
+                    }))
+                  }
                 }
                 className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
               >
@@ -1651,7 +1673,20 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
                 <div className="space-y-2">
                   <label className="text-sm text-gray-700 dark:text-gray-300">Əlaqəli fəaliyyətlər</label>
                   <div className="max-h-52 space-y-2 overflow-y-auto rounded-lg border border-gray-100 p-2 dark:border-gray-800">
-                    {departmentActivities.map((activity) => {
+                    <input
+                      type="text"
+                      value={createActivitySearch}
+                      onChange={(e) => setCreateActivitySearch(e.target.value)}
+                      placeholder="Fəaliyyət axtar..."
+                      className="w-full rounded-md border border-gray-200 px-3 py-2 text-xs outline-none focus:border-brand-400 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    />
+                    {departmentActivities
+                      .filter((activity) =>
+                        String(activity.name || '')
+                          .toLowerCase()
+                          .includes(createActivitySearch.toLowerCase())
+                      )
+                      .map((activity) => {
                       const activityId = Number(activity.id)
                       const isSelected = assignee.related_activity_ids.some(
                         (id) => Number(id) === activityId
@@ -2642,15 +2677,8 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
                   onChange={(e) => {
                     const departmentId = e.target.value
                     setEditTaskModal((prev) => ({ ...prev, department_id: departmentId }))
-                    setEditAssignees([
-                      {
-                        user_id: '',
-                        work_description: '',
-                        related_activity_ids: [],
-                        due_date_mode: 'task',
-                        custom_due_date: ''
-                      }
-                    ])
+                    setEditActivitySearch('')
+                    setEditAssignees([createEmptyAssignee()])
                   }}
                   className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                 >
@@ -2662,13 +2690,12 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
                   ))}
                 </select>
                 <div className="space-y-1">
-                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Son müddət</p>
-                  <input
-                    type="date"
-                    value={editTaskModal.due_date}
-                    onChange={(e) => setEditTaskModal((prev) => ({ ...prev, due_date: e.target.value }))}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                    required
+                  <DatePicker
+                    id="edit-task-due-date"
+                    label="Son müddət"
+                    placeholder="Tarix seçin"
+                    defaultDate={editTaskModal.due_date || undefined}
+                    onChange={(_, dateStr) => setEditTaskModal((prev) => ({ ...prev, due_date: dateStr }))}
                   />
                 </div>
                 <select
@@ -2736,13 +2763,7 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
                         onClick={() =>
                           setEditAssignees((prev) => [
                             ...prev,
-                            {
-                              user_id: '',
-                              work_description: '',
-                              related_activity_ids: [],
-                              due_date_mode: 'task',
-                              custom_due_date: ''
-                            }
+                            createEmptyAssignee()
                           ])
                         }
                         className="rounded-lg bg-brand-500 px-3 py-2 text-xs font-medium text-white hover:bg-brand-600"
@@ -2753,15 +2774,72 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
 
                     {editAssignees.map((assignee, index) => (
                       <div key={index} className="space-y-3 rounded-xl border border-gray-200 p-4 dark:border-gray-700">
+                        {assignee.is_saved && assignee.user_id ? (
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex min-w-0 items-center gap-3">
+                              {(() => {
+                                const member = getEditAssigneeMember(assignee.user_id)
+                                const photoUrl = resolveAvatarUrl(member?.photo)
+
+                                return (
+                                  <>
+                                    {photoUrl ? (
+                                      <img
+                                        src={photoUrl}
+                                        alt={member?.full_name || 'İcraçı'}
+                                        className="h-11 w-11 shrink-0 rounded-full object-cover"
+                                      />
+                                    ) : (
+                                      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-gray-100 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                                        {getInitials(member?.full_name)}
+                                      </span>
+                                    )}
+                                    <div className="min-w-0">
+                                      <p className="truncate text-sm font-medium text-gray-800 dark:text-white">
+                                        {member?.full_name || 'İcraçı'}
+                                      </p>
+                                      <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+                                        {member?.email || '-'}
+                                      </p>
+                                    </div>
+                                  </>
+                                )
+                              })()}
+                            </div>
+                            <div className="flex shrink-0 items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => updateEditAssignee(index, (current) => ({ ...current, is_saved: false }))}
+                                className="rounded-md border border-gray-200 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                              >
+                                Düzəliş et
+                              </button>
+                              {editAssignees.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setEditAssignees((prev) =>
+                                      prev.filter((_, currentIndex) => currentIndex !== index)
+                                    )
+                                  }
+                                  className="rounded-md border border-red-200 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 dark:border-red-900/40 dark:hover:bg-red-900/20"
+                                >
+                                  Sil
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          <>
                         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                           <select
                             value={assignee.user_id}
                             onChange={(e) =>
-                              setEditAssignees((prev) => {
-                                const next = [...prev]
-                                next[index] = { ...next[index], user_id: e.target.value }
-                                return next
-                              })
+                              updateEditAssignee(index, (current) => ({
+                                ...current,
+                                user_id: e.target.value,
+                                is_saved: false
+                              }))
                             }
                             className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                           >
@@ -2778,14 +2856,11 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
                           <select
                             value={assignee.due_date_mode}
                             onChange={(e) =>
-                              setEditAssignees((prev) => {
-                                const next = [...prev]
-                                next[index] = {
-                                  ...next[index],
-                                  due_date_mode: e.target.value as 'task' | 'custom'
-                                }
-                                return next
-                              })
+                              updateEditAssignee(index, (current) => ({
+                                ...current,
+                                due_date_mode: e.target.value as 'task' | 'custom',
+                                is_saved: false
+                              }))
                             }
                             className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                           >
@@ -2797,14 +2872,11 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
                         <textarea
                           value={assignee.work_description}
                           onChange={(e) =>
-                            setEditAssignees((prev) => {
-                              const next = [...prev]
-                              next[index] = {
-                                ...next[index],
-                                work_description: e.target.value
-                              }
-                              return next
-                            })
+                            updateEditAssignee(index, (current) => ({
+                              ...current,
+                              work_description: e.target.value,
+                              is_saved: false
+                            }))
                           }
                           placeholder="İcraçının görəcəyi işlər"
                           rows={2}
@@ -2813,8 +2885,21 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
 
                         <div className="space-y-2">
                           <label className="text-sm text-gray-700 dark:text-gray-300">Əlaqəli fəaliyyətlər</label>
-                          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                            {editDepartmentActivities.map((activity) => {
+                          <div className="max-h-52 space-y-2 overflow-y-auto rounded-lg border border-gray-100 p-2 dark:border-gray-800">
+                            <input
+                              type="text"
+                              value={editActivitySearch}
+                              onChange={(e) => setEditActivitySearch(e.target.value)}
+                              placeholder="Fəaliyyət axtar..."
+                              className="w-full rounded-md border border-gray-200 px-3 py-2 text-xs outline-none focus:border-brand-400 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                            />
+                            {editDepartmentActivities
+                              .filter((activity) =>
+                                String(activity.name || '')
+                                  .toLowerCase()
+                                  .includes(editActivitySearch.toLowerCase())
+                              )
+                              .map((activity) => {
                               const activityId = Number(activity.id)
                               const isSelected = assignee.related_activity_ids.some(
                                 (id) => Number(id) === activityId
@@ -2833,18 +2918,17 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
                                     type="checkbox"
                                     checked={isSelected}
                                     onChange={() =>
-                                      setEditAssignees((prev) => {
-                                        const next = [...prev]
-                                        const currentIds = next[index].related_activity_ids
+                                      updateEditAssignee(index, (current) => {
+                                        const currentIds = current.related_activity_ids
                                         const updatedIds = isSelected
                                           ? currentIds.filter((id) => Number(id) !== activityId)
                                           : Array.from(new Set([...currentIds.map(Number), activityId]))
 
-                                        next[index] = {
-                                          ...next[index],
-                                          related_activity_ids: updatedIds
+                                        return {
+                                          ...current,
+                                          related_activity_ids: updatedIds,
+                                          is_saved: false
                                         }
-                                        return next
                                       })
                                     }
                                     className="h-4 w-4 rounded-full border-gray-300 text-brand-500 focus:ring-brand-500"
@@ -2860,35 +2944,46 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
                         </div>
 
                         {assignee.due_date_mode === 'custom' && (
-                          <input
-                            type="date"
-                            value={assignee.custom_due_date}
-                            onChange={(e) =>
-                              setEditAssignees((prev) => {
-                                const next = [...prev]
-                                next[index] = {
-                                  ...next[index],
-                                  custom_due_date: e.target.value
-                                }
-                                return next
-                              })
+                          <DatePicker
+                            id={`edit-assignee-due-date-${index}`}
+                            label="Fərdi müddət"
+                            placeholder="Tarix seçin"
+                            defaultDate={assignee.custom_due_date || undefined}
+                            onChange={(_, dateStr) =>
+                              updateEditAssignee(index, (current) => ({
+                                ...current,
+                                custom_due_date: dateStr,
+                                is_saved: false
+                              }))
                             }
-                            className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                           />
                         )}
 
-                        {editAssignees.length > 1 && (
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          {editAssignees.length > 1 ? (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setEditAssignees((prev) =>
+                                  prev.filter((_, currentIndex) => currentIndex !== index)
+                                )
+                              }
+                              className="text-xs font-medium text-red-600 hover:text-red-700"
+                            >
+                              Bu icraçını sil
+                            </button>
+                          ) : (
+                            <span />
+                          )}
                           <button
                             type="button"
-                            onClick={() =>
-                              setEditAssignees((prev) =>
-                                prev.filter((_, currentIndex) => currentIndex !== index)
-                              )
-                            }
-                            className="text-xs font-medium text-red-600 hover:text-red-700"
+                            onClick={() => markEditAssigneeSaved(index)}
+                            className="rounded-lg bg-gray-900 px-4 py-2 text-xs font-medium text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
                           >
-                            Bu icraçını sil
+                            İcraçını yadda saxla
                           </button>
+                        </div>
+                          </>
                         )}
                       </div>
                     ))}
