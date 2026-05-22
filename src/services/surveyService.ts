@@ -11,6 +11,7 @@ export interface CreateSurveyPayload {
   description?: string
   year: string
   semester: 'YAZ' | 'YAY' | 'PAYIZ'
+  deadline_at: string
   employee_group_id: number
   question_bank_id: number
   activity_ids?: number[]
@@ -24,6 +25,8 @@ export interface Survey {
   description?: string
   year: string
   semester?: 'YAZ' | 'YAY' | 'PAYIZ'
+  deadline_at?: string
+  is_active?: boolean
   employee_group_id: number
   question_bank_id?: number | null
   question_bank_name?: string | null

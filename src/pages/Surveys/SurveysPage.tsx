@@ -13,6 +13,27 @@ import { useHelperToolOptions } from "../../hooks/useHelperToolOptions";
 
 const ROWS_PER_PAGE = 20;
 
+const toDateTimeLocalValue = (value?: string | null) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const offsetMs = date.getTimezoneOffset() * 60 * 1000;
+  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
+};
+
+const toDisplayDateTime = (value?: string | null) => {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return date.toLocaleString("az-AZ", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
 const isTeacherGroup = (group: EmployeeGroup) => {
   const values = [group.code, group.name, group.name_en]
     .filter(Boolean)
@@ -54,6 +75,7 @@ const SurveysPage: React.FC = () => {
   const [description, setDescription] = useState("");
   const [year, setYear] = useState(() => String(new Date().getFullYear()));
   const [semester, setSemester] = useState<"YAZ" | "YAY" | "PAYIZ">("YAZ");
+  const [deadlineAt, setDeadlineAt] = useState("");
   const [groupId, setGroupId] = useState<string>("");
   const [questionBankId, setQuestionBankId] = useState<string>("");
   const [participantIds, setParticipantIds] = useState<number[]>([]);
@@ -161,6 +183,7 @@ const SurveysPage: React.FC = () => {
     setDescription("");
     setYear(initialAcademicYear);
     setSemester((initialSemester as "YAZ" | "YAY" | "PAYIZ") || "YAZ");
+    setDeadlineAt("");
     setGroupId("");
     setQuestionBankId("");
     setParticipantIds([]);
@@ -176,6 +199,7 @@ const SurveysPage: React.FC = () => {
     setDescription(survey.description || "");
     setYear(surveyYear || initialAcademicYear);
     setSemester((survey.semester || initialSemester || "YAZ") as "YAZ" | "YAY" | "PAYIZ");
+    setDeadlineAt(toDateTimeLocalValue(survey.deadline_at));
     setGroupId(survey.employee_group_id ? String(survey.employee_group_id) : "");
     setQuestionBankId(survey.question_bank_id ? String(survey.question_bank_id) : "");
     setParticipantIds((survey.participants || []).map((participant) => participant.user_id));
@@ -251,6 +275,22 @@ const SurveysPage: React.FC = () => {
       return;
     }
 
+    if (!deadlineAt) {
+      setError("Son müddət təyin olunmalıdır");
+      return;
+    }
+
+    const deadlineDate = new Date(deadlineAt);
+    if (Number.isNaN(deadlineDate.getTime())) {
+      setError("Son müddət düzgün tarix olmalıdır");
+      return;
+    }
+
+    if (deadlineDate.getTime() <= Date.now()) {
+      setError("Son müddət gələcək tarix olmalıdır");
+      return;
+    }
+
     if (!questionBankId || !selectedQuestionBank) {
       setError("Sual bankı seçilməlidir");
       return;
@@ -282,6 +322,7 @@ const SurveysPage: React.FC = () => {
         description: description.trim(),
         year: normalizedYear,
         semester: normalizedSemester as "YAZ" | "YAY" | "PAYIZ",
+        deadline_at: deadlineDate.toISOString(),
         employee_group_id: Number(groupId),
         question_bank_id: Number(questionBankId),
         activity_ids: selectedQuestionBankActivityIds,
@@ -503,6 +544,8 @@ const SurveysPage: React.FC = () => {
                   <th className="pb-3 pr-4 font-medium">Sorğunun adı</th>
                   <th className="pb-3 pr-4 font-medium">İl</th>
                   <th className="pb-3 pr-4 font-medium">Semestr</th>
+                  <th className="pb-3 pr-4 font-medium">Son müddət</th>
+                  <th className="pb-3 pr-4 font-medium">Status</th>
                   <th className="pb-3 pr-4 font-medium">İşçi qrupu</th>
                   <th className="pb-3 pr-4 font-medium">Fəaliyyət sayı</th>
                   <th className="pb-3 pr-4 font-medium">İştirakçı sayı</th>
@@ -522,6 +565,22 @@ const SurveysPage: React.FC = () => {
                           : record.semester === "PAYIZ"
                             ? "Payız"
                             : "-"}
+                    </td>
+                    <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">
+                      {toDisplayDateTime(record.deadline_at)}
+                    </td>
+                    <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">
+                      <span
+                        className={`inline-flex rounded-md px-2.5 py-1 text-xs font-normal ring-1 ring-inset ${
+                          record.is_active && record.deadline_at && new Date(record.deadline_at).getTime() > Date.now()
+                            ? "bg-green-50 text-green-700 ring-green-200 dark:bg-green-900/20 dark:text-green-300 dark:ring-green-900"
+                            : "bg-gray-100 text-gray-700 ring-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:ring-gray-700"
+                        }`}
+                      >
+                        {record.is_active && record.deadline_at && new Date(record.deadline_at).getTime() > Date.now()
+                          ? "Aktiv"
+                          : "Deaktiv"}
+                      </span>
                     </td>
                     <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{record.group_name || "-"}</td>
                     <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">
@@ -699,6 +758,18 @@ const SurveysPage: React.FC = () => {
                       </option>
                     ))}
                   </select>
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Son müddət *
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={deadlineAt}
+                    onChange={(e) => setDeadlineAt(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                  />
                 </div>
               </div>
 
