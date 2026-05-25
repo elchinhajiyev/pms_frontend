@@ -1800,6 +1800,166 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
             <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-6 text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
               Task tapılmadı.
             </div>
+          ) : !isManager ? (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {visibleTasks.map((task) => {
+                const progress = getTaskProgress(task)
+                const assignees = Array.isArray(task.assignments) ? task.assignments : []
+                const avatarItems = assignees.slice(0, 4)
+                const extraCount = Math.max(assignees.length - avatarItems.length, 0)
+
+                return (
+                  <div
+                    key={task.id}
+                    className="relative h-full rounded-2xl border border-gray-200 bg-white p-5 pb-16 shadow-sm transition-shadow duration-200 hover:shadow-md dark:border-gray-800 dark:bg-gray-900"
+                  >
+                    <div className="mb-4 overflow-hidden rounded-xl border border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
+                      <img
+                        src="/4892463.jpg"
+                        alt="Task cover"
+                        className="h-32 w-full object-cover"
+                        loading="lazy"
+                      />
+                    </div>
+
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between text-xs font-medium">
+                        <span className="text-gray-500 dark:text-gray-400">Proqres</span>
+                        <span className="text-gray-700 dark:text-gray-200">
+                          {progress.percent}% ({progress.completed}/{progress.total})
+                        </span>
+                      </div>
+                      <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-800">
+                        <div
+                          className="h-full rounded-full bg-brand-500 transition-all duration-300"
+                          style={{ width: `${progress.percent}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                          {task.subject}
+                        </h3>
+                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                          {task.department_name || '-'}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2 text-xs font-medium">
+                        <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                          {task.priority || 'Prioritet yoxdur'}
+                        </span>
+                        <span className={`rounded-full px-3 py-1 ${getTaskStatusBadgeClass(task.status)}`}>
+                          {task.status}
+                        </span>
+                      </div>
+                    </div>
+
+                    <p className="mt-3 line-clamp-3 text-sm text-gray-600 dark:text-gray-300">
+                      {task.description || 'Təsvir yoxdur'}
+                    </p>
+
+                    <div className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+                      <div>
+                        <p className="text-gray-500 dark:text-gray-400">Müddət</p>
+                        <p className="font-medium text-gray-800 dark:text-white">
+                          {toDisplayDate(task.due_date)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500 dark:text-gray-400">İcraçı</p>
+                        <p className="font-medium text-gray-800 dark:text-white">
+                          {task.assignee_count || 0}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500 dark:text-gray-400">Tamamlanmış</p>
+                        <p className="font-medium text-gray-800 dark:text-white">
+                          {task.completed_assignee_count || 0}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500 dark:text-gray-400">Yaradılıb</p>
+                        <p className="font-medium text-gray-800 dark:text-white">
+                          {toDisplayDate(task.created_at)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="absolute bottom-4 left-4">
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/tasks/taskDetails/${task.id}`)}
+                        className="rounded-lg bg-brand-500 px-4 py-2 text-xs font-medium text-white hover:bg-brand-600"
+                      >
+                        Tapşırığı icra et
+                      </button>
+                    </div>
+
+                    <div className="absolute bottom-4 right-4 flex items-center justify-end gap-2">
+                      <div className="flex items-center">
+                        {avatarItems.map((assignee, index) => {
+                          const avatarUrl = resolveAvatarUrl(assignee.user_photo)
+                          const name = String(assignee.user_name || 'İcraçı').trim()
+                          const roleLabel = String(assignee.role_name || assignee.role_code || 'İcraçı').trim()
+                          const profileLink = buildProfileLink(assignee.user_id)
+
+                          return (
+                            <div
+                              key={`${task.id}-${assignee.id}-${assignee.user_id || index}`}
+                              className={`group relative ${index === 0 ? '' : '-ml-4'}`}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => navigate(profileLink)}
+                                className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-gray-200 text-[10px] font-semibold text-gray-700 transition-transform duration-150 hover:scale-105 dark:border-gray-900 dark:bg-gray-800 dark:text-gray-200"
+                                title={name}
+                              >
+                                {avatarUrl ? (
+                                  <Avatar src={avatarUrl} alt={name} size="medium" status="none" />
+                                ) : (
+                                  <span>{getInitials(name)}</span>
+                                )}
+                              </button>
+
+                              <div className="absolute bottom-full left-1/2 z-20 mb-2 hidden w-56 -translate-x-1/2 rounded-xl border border-gray-200 bg-white p-3 shadow-lg group-hover:block dark:border-gray-700 dark:bg-gray-900">
+                                <div className="flex items-center gap-3">
+                                  {avatarUrl ? (
+                                    <Avatar src={avatarUrl} alt={name} size="small" status="none" />
+                                  ) : (
+                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-[10px] font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                                      {getInitials(name)}
+                                    </div>
+                                  )}
+                                  <div className="min-w-0 flex-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => navigate(profileLink)}
+                                      className="block w-full truncate text-left text-sm font-semibold text-gray-800 hover:text-brand-500 dark:text-white"
+                                    >
+                                      {name || 'İcraçı'}
+                                    </button>
+                                    <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
+                                      {roleLabel || 'İcraçı'}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                      {extraCount > 0 && (
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-brand-500 text-[10px] font-semibold text-white dark:border-gray-900">
+                          +{extraCount}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           ) : (
             <div className="overflow-x-auto lg:overflow-visible">
               <div className="min-w-[980px] rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
@@ -2114,7 +2274,7 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
                                   }}
                                   className={`rounded-lg px-3 py-2 text-xs font-medium ${activeAssignmentId === assignment.id ? 'bg-brand-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300'}`}
                                 >
-                                  Tapşırığı redaktə et
+                                  Tapşırığı icra et
                                 </button>
 
                                 {activeAssignmentId === assignment.id && (
