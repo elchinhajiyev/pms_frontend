@@ -55,7 +55,16 @@ export default function ScientificReportsListPage() {
       const data = Array.isArray(res?.data) ? res.data : [];
       setItems(data);
     } catch (err: any) {
-      setError(err?.response?.data?.message || "Elmi məruzələr yüklənmədi");
+      const responseError = err?.response?.data;
+      const detailedError = [
+        responseError?.message,
+        responseError?.error,
+        responseError?.code ? `Kod: ${responseError.code}` : "",
+        responseError?.detail
+      ]
+        .filter(Boolean)
+        .join(" | ");
+      setError(detailedError || "Elmi məruzələr yüklənmədi");
       setItems([]);
     } finally {
       setLoading(false);
