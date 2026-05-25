@@ -10,7 +10,8 @@ import { useNavigate, useParams } from 'react-router'
 import { IoMdArrowRoundBack } from "react-icons/io";
 import { IoIosMore } from 'react-icons/io'
 import { IoCheckmarkCircleOutline, IoCloseCircleOutline } from 'react-icons/io5'
-import { FiTrash2 } from 'react-icons/fi'
+import { FiEdit2, FiTrash2 } from 'react-icons/fi'
+import { MdDeleteForever } from 'react-icons/md'
 import { MdOutlineWatchLater } from 'react-icons/md'
 import Avatar from '../../components/ui/avatar/Avatar'
 import { useHelperToolOptions } from '../../hooks/useHelperToolOptions'
@@ -1956,7 +1957,7 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
                       </div>
                     </div>
 
-                    <div className="absolute bottom-4 left-4">
+                    <div className="absolute bottom-4 left-4 flex flex-wrap items-center gap-2">
                       <button
                         type="button"
                         onClick={() => navigate(`/tasks/taskDetails/${task.id}`)}
@@ -1964,6 +1965,46 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
                       >
                         Tapşırığı icra et
                       </button>
+                      {Number(task.created_by) === Number(user?.id) && !task.deleted_at && (
+                        <>
+                          <div className="group relative">
+                            <button
+                              type="button"
+                              onClick={() => void openEditTaskModal(task)}
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-amber-500 text-white hover:bg-amber-600"
+                            >
+                              <FiEdit2 className="text-sm" />
+                            </button>
+                            <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 rounded-md bg-gray-900 px-2 py-1 text-[10px] font-medium text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100 dark:bg-gray-100 dark:text-gray-900">
+                              Redaktə et
+                            </span>
+                          </div>
+                          <div className="group relative">
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteTask(task.id)}
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-red-600 text-white hover:bg-red-700"
+                            >
+                              <FiTrash2 className="text-sm" />
+                            </button>
+                            <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 rounded-md bg-gray-900 px-2 py-1 text-[10px] font-medium text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100 dark:bg-gray-100 dark:text-gray-900">
+                              Səbətə göndər
+                            </span>
+                          </div>
+                          <div className="group relative">
+                            <button
+                              type="button"
+                              onClick={() => handleHardDeleteTask(task.id)}
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-red-800 text-white hover:bg-red-900"
+                            >
+                              <MdDeleteForever className="text-sm" />
+                            </button>
+                            <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 rounded-md bg-gray-900 px-2 py-1 text-[10px] font-medium text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100 dark:bg-gray-100 dark:text-gray-900">
+                              Sil
+                            </span>
+                          </div>
+                        </>
+                      )}
                     </div>
 
                     <div className="absolute bottom-4 right-4 flex items-center justify-end gap-2">
