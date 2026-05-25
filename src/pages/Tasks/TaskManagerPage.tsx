@@ -85,11 +85,9 @@ const getAssignmentStatusBadgeClass = (status?: string | null, isRejected = fals
 }
 
 const getAssignmentStepState = ({
-  isCompleted,
   isApproved,
   isRejected
 }: {
-  isCompleted: boolean
   isApproved: boolean
   isRejected: boolean
 }) => {
@@ -109,16 +107,8 @@ const getAssignmentStepState = ({
     }
   }
 
-  if (isCompleted) {
-    return {
-      circleClass: 'border-brand-500 bg-brand-500 text-white',
-      lineClass: 'bg-brand-200 dark:bg-brand-900/50',
-      icon: <IoCheckmarkCircleOutline className="text-lg" />
-    }
-  }
-
   return {
-    circleClass: 'border-yellow-500 bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
+    circleClass: 'border-gray-300 bg-gray-100 text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400',
     lineClass: 'bg-gray-200 dark:bg-gray-800',
     icon: <MdOutlineWatchLater className="text-lg" />
   }
@@ -2314,7 +2304,6 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
                         )
                         const isRejectedAssignment = hasRejectedBefore && assignment.status === 'İcrada'
                         const stepState = getAssignmentStepState({
-                          isCompleted: isCompletedAssignment,
                           isApproved: isApprovedAssignment,
                           isRejected: isRejectedAssignment
                         })
