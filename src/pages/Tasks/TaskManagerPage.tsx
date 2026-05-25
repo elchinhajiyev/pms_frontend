@@ -120,6 +120,26 @@ const toDisplayDate = (value?: string | null) => {
   return String(value).includes('T') ? String(value).split('T')[0] : String(value)
 }
 
+const isPastDueDate = (value?: string | null) => {
+  if (!value) return false
+  const due = new Date(value)
+  if (Number.isNaN(due.getTime())) return false
+  due.setHours(23, 59, 59, 999)
+  return due.getTime() < Date.now()
+}
+
+const getProgressBarClass = (task: Task, percent: number) => {
+  if (isPastDueDate(task.due_date) && percent < 100) {
+    return 'bg-red-500'
+  }
+
+  if (percent >= 100) {
+    return 'bg-green-600'
+  }
+
+  return 'bg-yellow-500'
+}
+
 const resolveFileUrl = (value?: string | null) => {
   const raw = String(value || '').trim()
   if (!raw) return ''
@@ -1880,7 +1900,7 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
                       </div>
                       <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-800">
                         <div
-                          className="h-full rounded-full bg-brand-500 transition-all duration-300"
+                          className={`h-full rounded-full transition-all duration-300 ${getProgressBarClass(task, progress.percent)}`}
                           style={{ width: `${progress.percent}%` }}
                         />
                       </div>
@@ -2070,7 +2090,7 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
                             <div className="flex items-center gap-2">
                               <div className="h-1.5 min-w-16 flex-1 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
                                 <div
-                                  className="h-full rounded-full bg-brand-500"
+                                  className={`h-full rounded-full ${getProgressBarClass(task, progress.percent)}`}
                                   style={{ width: `${progress.percent}%` }}
                                 />
                               </div>
