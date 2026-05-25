@@ -2273,7 +2273,8 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
                     <p className="text-sm text-gray-500 dark:text-gray-400">İcraçılar</p>
                     <div className="mt-2 space-y-4">
                       {selectedTask.assignments?.map((assignment, assignmentIndex) => {
-                        const canReview = isManager
+                        const canReview =
+                          isManager && Number(selectedTask.created_by) === Number(user?.id)
                         const isOwnAssignment = Number(assignment.user_id) === Number(user?.id)
                         const canWorkOnAssignment = isOwnAssignment && assignment.status === 'İcrada'
                         const isCompletedAssignment = assignment.status === 'Tamamlandı'
