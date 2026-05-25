@@ -753,12 +753,12 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
     }
   }
 
-  const handleCompleteOwnAssignment = async (assignmentId: number) => {
+  const handleCompleteOwnAssignment = async (assignmentId: number, isRework = false) => {
     setSaving(true)
     setError('')
     try {
       await taskService.completeAssignment(assignmentId)
-      setSuccess('Tapşırıq yenidən tamamlandı')
+      setSuccess(isRework ? 'Tapşırıq yenidən tamamlandı' : 'Tapşırıq tamamlandı')
       setActiveAssignmentId(null)
       setActiveUpdateId(null)
       setUpdateContent('')
@@ -2249,6 +2249,11 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
                             files: parseUpdateFiles(item.file_url, item.file_name)
                           }))
                           .filter((item) => item.files.length > 0)
+                        const hasRejectedBefore = (selectedTask.updates || []).some(
+                          (update) =>
+                            Number(update.task_assignment_id) === Number(assignment.id) &&
+                            String(update.content || '').trim().startsWith('İmtina səbəbi:')
+                        )
                         return (
                           <div key={assignment.id} className="rounded-xl border border-gray-200 p-3 dark:border-gray-700">
                             <div className="flex items-center justify-between gap-3">
@@ -2444,15 +2449,15 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
                                         disabled={saving}
                                         className="rounded-lg bg-brand-500 px-3 py-2 text-xs font-medium text-white hover:bg-brand-600 disabled:opacity-60"
                                       >
-                                        Redaktəni yadda saxla
+                                        Tapşırığı yadda saxla
                                       </button>
                                       <button
                                         type="button"
-                                        onClick={() => handleCompleteOwnAssignment(assignment.id)}
+                                        onClick={() => handleCompleteOwnAssignment(assignment.id, hasRejectedBefore)}
                                         disabled={saving}
                                         className="rounded-lg bg-green-600 px-3 py-2 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-60"
                                       >
-                                        Yenidən tamamla
+                                        {hasRejectedBefore ? 'Yenidən tamamla' : 'Tamamla'}
                                       </button>
                                     </div>
                                   </div>
