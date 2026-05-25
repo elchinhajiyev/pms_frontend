@@ -11,6 +11,7 @@ import { IoMdArrowRoundBack } from "react-icons/io";
 import { IoIosMore } from 'react-icons/io'
 import { IoCheckmarkCircleOutline, IoCloseCircleOutline } from 'react-icons/io5'
 import { FiTrash2 } from 'react-icons/fi'
+import { MdOutlineWatchLater } from 'react-icons/md'
 import Avatar from '../../components/ui/avatar/Avatar'
 import { useHelperToolOptions } from '../../hooks/useHelperToolOptions'
 import DatePicker from '../../components/form/date-picker'
@@ -64,6 +65,63 @@ const getTaskStatusBadgeClass = (status?: string | null) => {
   }
 
   return 'bg-brand-500 text-white'
+}
+
+const getAssignmentStatusBadgeClass = (status?: string | null, isRejected = false) => {
+  if (isRejected) {
+    return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+  }
+
+  const normalizedStatus = String(status || '').trim().toLowerCase()
+  if (normalizedStatus === 'tamamlandı' || normalizedStatus === 'tamamlandi') {
+    return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+  }
+
+  if (normalizedStatus === 'icrada' || normalizedStatus === 'i̇crada' || normalizedStatus === 'İcrada'.toLowerCase()) {
+    return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
+  }
+
+  return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+}
+
+const getAssignmentStepState = ({
+  isCompleted,
+  isApproved,
+  isRejected
+}: {
+  isCompleted: boolean
+  isApproved: boolean
+  isRejected: boolean
+}) => {
+  if (isRejected) {
+    return {
+      circleClass: 'border-red-600 bg-red-600 text-white',
+      lineClass: 'bg-red-200 dark:bg-red-900/50',
+      icon: <IoCloseCircleOutline className="text-lg" />
+    }
+  }
+
+  if (isApproved) {
+    return {
+      circleClass: 'border-green-600 bg-green-600 text-white',
+      lineClass: 'bg-green-200 dark:bg-green-900/50',
+      icon: <IoCheckmarkCircleOutline className="text-lg" />
+    }
+  }
+
+  if (isCompleted) {
+    return {
+      circleClass: 'border-brand-500 bg-brand-500 text-white',
+      lineClass: 'bg-brand-200 dark:bg-brand-900/50',
+      icon: <IoCheckmarkCircleOutline className="text-lg" />
+    }
+  }
+
+  return {
+    circleClass: 'border-yellow-500 bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
+    lineClass: 'bg-gray-200 dark:bg-gray-800',
+    icon: <MdOutlineWatchLater className="text-lg" />
+  }
 }
 
 const toDisplayDate = (value?: string | null) => {
@@ -2222,8 +2280,8 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
               <div className="mt-4 space-y-4">
                   <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">İcraçılar</p>
-                    <div className="mt-2 space-y-3">
-                      {selectedTask.assignments?.map((assignment) => {
+                    <div className="mt-2 space-y-4">
+                      {selectedTask.assignments?.map((assignment, assignmentIndex) => {
                         const canReview = isManager
                         const isOwnAssignment = Number(assignment.user_id) === Number(user?.id)
                         const canWorkOnAssignment = isOwnAssignment && assignment.status === 'İcrada'
@@ -2254,16 +2312,37 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
                             Number(update.task_assignment_id) === Number(assignment.id) &&
                             String(update.content || '').trim().startsWith('İmtina səbəbi:')
                         )
+                        const isRejectedAssignment = hasRejectedBefore && assignment.status === 'İcrada'
+                        const stepState = getAssignmentStepState({
+                          isCompleted: isCompletedAssignment,
+                          isApproved: isApprovedAssignment,
+                          isRejected: isRejectedAssignment
+                        })
+                        const isLastAssignment =
+                          assignmentIndex === (selectedTask.assignments?.length || 0) - 1
                         return (
-                          <div key={assignment.id} className="rounded-xl border border-gray-200 p-3 dark:border-gray-700">
-                            <div className="flex items-center justify-between gap-3">
-                              <div>
-                                <p className="font-medium text-gray-800 dark:text-white">{assignment.user_name || 'İcraçı'}</p>
-                              </div>
-                              <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                                {assignment.status || 'İcrada'}
+                          <div key={assignment.id} className="relative flex gap-3">
+                            <div className="relative flex w-9 shrink-0 justify-center">
+                              {!isLastAssignment && (
+                                <span
+                                  className={`absolute left-1/2 top-9 h-[calc(100%+1rem)] w-px -translate-x-1/2 ${stepState.lineClass}`}
+                                />
+                              )}
+                              <span
+                                className={`relative z-10 flex h-9 w-9 items-center justify-center rounded-full border ${stepState.circleClass}`}
+                              >
+                                {stepState.icon}
                               </span>
                             </div>
+                            <div className="min-w-0 flex-1 rounded-xl border border-gray-200 p-3 dark:border-gray-700">
+                              <div className="flex items-center justify-between gap-3">
+                                <div>
+                                  <p className="font-medium text-gray-800 dark:text-white">{assignment.user_name || 'İcraçı'}</p>
+                                </div>
+                                <span className={`rounded-full px-3 py-1 text-xs font-medium ${getAssignmentStatusBadgeClass(assignment.status, isRejectedAssignment)}`}>
+                                  {isRejectedAssignment ? 'İmtina' : assignment.status || 'İcrada'}
+                                </span>
+                              </div>
                             <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{assignment.work_description || 'İş təsviri yoxdur'}</p>
                             <p className="text-xs text-gray-500 dark:text-gray-400">Müddət: {assignment.due_date_mode === 'custom' ? toDisplayDate(assignment.custom_due_date) : toDisplayDate(selectedTask.due_date)}</p>
 
@@ -2511,6 +2590,7 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
                               </div>
                             )}
                           </div>
+                          </div>
                         )
                       })}
                     </div>
@@ -2622,11 +2702,11 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
                                 {(isApproved || isRejected) && (
                                   <div className="mt-2 flex justify-end">
                                     {isApproved ? (
-                                      <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 dark:text-green-300">
+                                      <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-300">
                                         <IoCheckmarkCircleOutline className="text-sm" /> Təsdiqləndi
                                       </span>
                                     ) : (
-                                      <span className="inline-flex items-center gap-1 text-xs font-medium text-red-700 dark:text-red-300">
+                                      <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-300">
                                         <IoCloseCircleOutline className="text-sm" /> İmtina edildi
                                       </span>
                                     )}
