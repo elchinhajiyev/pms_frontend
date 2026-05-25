@@ -14,7 +14,6 @@ import { FiTrash2 } from 'react-icons/fi'
 import Avatar from '../../components/ui/avatar/Avatar'
 import { useHelperToolOptions } from '../../hooks/useHelperToolOptions'
 import DatePicker from '../../components/form/date-picker'
-import { FaRegFilePdf } from "react-icons/fa";
 
 
 export type TaskManagerView = 'create' | 'list' | 'stats' | 'detail' | 'ratings'
@@ -2363,7 +2362,7 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
                                                   </button>
                                                 ) : (
                                                   <div className="flex h-16 w-16 items-center justify-center rounded-lg border border-gray-300 bg-white text-xs font-semibold text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200">
-                                                    {isPdf ? <FaRegFilePdf /> : 'FILE'}
+                                                    {isPdf ? 'PDF': 'FILE'}
                                                   </div>
                                                 )}
                                                 <button
@@ -2602,9 +2601,17 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
                                           }
                                           className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
                                         >
-                                          <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-gray-700 dark:bg-gray-700 dark:text-gray-200">
-                                            {getFileTypeLabel(file.name, file.url)}
-                                          </span>
+                                          {isPdfFile(file.name, file.url) ? (
+                                            <img
+                                              src="/PDF_file_icon.svg"
+                                              alt="PDF"
+                                              className="h-7 w-7 shrink-0"
+                                            />
+                                          ) : (
+                                            <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-gray-700 dark:bg-gray-700 dark:text-gray-200">
+                                              {getFileTypeLabel(file.name, file.url)}
+                                            </span>
+                                          )}
                                           <span>{file.name || 'Faylı aç'}</span>
                                         </button>
                                       )
