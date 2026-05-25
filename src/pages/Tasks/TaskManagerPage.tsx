@@ -15,6 +15,7 @@ import { MdOutlineWatchLater } from 'react-icons/md'
 import Avatar from '../../components/ui/avatar/Avatar'
 import { useHelperToolOptions } from '../../hooks/useHelperToolOptions'
 import DatePicker from '../../components/form/date-picker'
+import { IoIosArrowDown } from "react-icons/io";
 
 
 export type TaskManagerView = 'create' | 'list' | 'stats' | 'detail' | 'ratings'
@@ -2766,7 +2767,7 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
                             </p>
                           </div>
                           <span className={`text-gray-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
-                            ▼
+                            <IoIosArrowDown />
                           </span>
                         </button>
 
