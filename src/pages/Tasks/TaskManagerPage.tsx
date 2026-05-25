@@ -1231,9 +1231,11 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
           ? assignment.assignment_ratings
           : []
 
+        const assignmentTaskText = String(assignment.work_description || '').trim() || task.subject || '-'
+
         return assignmentRatings.map((rating) => ({
           key: `${task.id}-${assignment.id}-${rating.id}`,
-          taskSubject: task.subject || '-',
+          taskSubject: assignmentTaskText,
           assigneeName: assignment.user_name || 'İcraçı',
           activityName: String(rating.activity_name || '-'),
           score: Number(rating.score || 0),
@@ -1254,9 +1256,11 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
             ? assignment.assignment_ratings
             : []
 
+          const assignmentTaskText = String(assignment.work_description || '').trim() || task.subject || '-'
+
           return assignmentRatings.map((rating) => ({
             key: `${task.id}-${assignment.id}-${rating.id}`,
-            taskSubject: task.subject || '-',
+            taskSubject: assignmentTaskText,
             activityName: String(rating.activity_name || '-'),
             score: Number(rating.score || 0),
             ratedAt: toDisplayDate(rating.created_at)
