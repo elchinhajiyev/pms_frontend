@@ -14,6 +14,7 @@ import { FiTrash2 } from 'react-icons/fi'
 import Avatar from '../../components/ui/avatar/Avatar'
 import { useHelperToolOptions } from '../../hooks/useHelperToolOptions'
 import DatePicker from '../../components/form/date-picker'
+import { FaRegFilePdf } from "react-icons/fa";
 
 
 export type TaskManagerView = 'create' | 'list' | 'stats' | 'detail' | 'ratings'
@@ -2362,7 +2363,7 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
                                                   </button>
                                                 ) : (
                                                   <div className="flex h-16 w-16 items-center justify-center rounded-lg border border-gray-300 bg-white text-xs font-semibold text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200">
-                                                    {isPdf ? 'PDF' : 'FILE'}
+                                                    {isPdf ? <FaRegFilePdf /> : 'FILE'}
                                                   </div>
                                                 )}
                                                 <button
