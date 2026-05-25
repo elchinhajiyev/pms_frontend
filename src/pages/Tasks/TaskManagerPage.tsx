@@ -257,12 +257,6 @@ const isStudentRole = (roleCode?: string, roleName?: string) => {
   return code === 'STUDENT' || name.includes('tələbə') || name.includes('student')
 }
 
-const isTeacherRole = (roleCode?: string, roleName?: string) => {
-  const code = String(roleCode || '').toUpperCase()
-  const name = String(roleName || '').toLowerCase()
-  return code === 'TEACHER' || name.includes('müəllim') || name.includes('muellim') || name.includes('teacher')
-}
-
 const isManagerRole = (user: { role_code?: string; role_name?: string; is_department_head?: boolean }) => {
   const code = String(user.role_code || '').toUpperCase()
   return Boolean(user.is_department_head) || ['ADMIN', 'RECTOR'].includes(code)
@@ -279,7 +273,6 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
   const { taskId } = useParams<{ taskId?: string }>()
   const taskIdFromUrl = Number(taskId)
   const isStudent = isStudentRole(user?.role_code, user?.role_name)
-  const isTeacher = isTeacherRole(user?.role_code, user?.role_name)
   const isAdmin = String(user?.role_code || '').toUpperCase() === 'ADMIN'
   const [isManagerFromProfile, setIsManagerFromProfile] = useState(false)
   const isManager = isManagerRole(user || {}) || isManagerFromProfile
@@ -1876,7 +1869,7 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
             <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-6 text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
               Task tapılmadı.
             </div>
-          ) : !isManager || isTeacher ? (
+          ) : !isAdmin ? (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
               {visibleTasks.map((task) => {
                 const progress = getTaskProgress(task)
