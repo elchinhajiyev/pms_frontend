@@ -1958,13 +1958,19 @@ export default function TaskManagerPage({ view }: TaskManagerPageProps) {
                     </div>
 
                     <div className="absolute bottom-4 left-4 flex flex-wrap items-center gap-2">
+                      {(() => {
+                        const isTaskCreator = Number(task.created_by) === Number(user?.id)
+
+                        return (
                       <button
                         type="button"
                         onClick={() => navigate(`/tasks/taskDetails/${task.id}`)}
                         className="rounded-lg bg-brand-500 px-4 py-2 text-xs font-medium text-white hover:bg-brand-600"
                       >
-                        Tapşırığı icra et
+                        {isTaskCreator ? 'Ətraflı' : 'Tapşırığı icra et'}
                       </button>
+                        )
+                      })()}
                       {Number(task.created_by) === Number(user?.id) && !task.deleted_at && (
                         <>
                           <div className="group relative">
