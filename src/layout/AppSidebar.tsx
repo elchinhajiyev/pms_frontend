@@ -248,6 +248,13 @@ const AppSidebar: React.FC = () => {
   );
 
   const generalMenuForRole = (() => {
+    const scientificAndTeachingItems = general.filter((nav) =>
+      [
+        "Elmi tədqiqat fəaliyyətləri",
+        "Tədris metodiki vəsaitlər"
+      ].includes(nav.name)
+    );
+
     if (isStudent) {
       return general.filter((nav) => nav.name === "Müəllim qiymətləndirilməsi");
     }
@@ -267,6 +274,10 @@ const AppSidebar: React.FC = () => {
         ...general.filter((nav) => nav.name === "Ümumi məlumatlar"),
         categoryItems
       ];
+    }
+
+    if (hasMonitoringAccess) {
+      return scientificAndTeachingItems;
     }
 
     return [];
@@ -327,7 +338,7 @@ const AppSidebar: React.FC = () => {
         <nav className="mb-6">
           <div className="flex flex-col gap-4">
             <div>
-              {!hasMonitoringAccess && (
+              {generalMenuForRole.length > 0 && (
                 <h2
                   className={`mb-4 text-xs  flex leading-[20px] text-gray-400 ${
                     !isExpanded && !isHovered

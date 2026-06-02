@@ -203,15 +203,17 @@ export default function AllUsersList() {
                   >
                     <td className="border-r border-gray-100 px-4 py-1.5 text-gray-800 dark:border-gray-800 dark:text-white">
                       <div className="flex items-center gap-3">
-                        <UserAvatar
-                          photo={user.photo}
-                          name={`${user.last_name} ${user.first_name}`}
-                          size="sm"
-                        />
-                        <span className="block min-w-0 truncate font-normal">
-                            {user.last_name} {user.first_name}
-                            {user.middle_name ? ` ${user.middle_name}` : ""}
-                          </span>
+                    <UserAvatar
+                      photo={user.photo}
+                      name={[user.first_name, user.last_name, user.middle_name]
+                        .filter(Boolean)
+                        .join(" ")}
+                      size="sm"
+                    />
+                    <span className="block min-w-0 truncate font-normal">
+                        {user.first_name} {user.last_name}
+                        {user.middle_name ? ` ${user.middle_name}` : ""}
+                      </span>
                       </div>
                     </td>
                     <td className="border-r border-gray-100 px-4 py-1.5 text-gray-600 dark:border-gray-800 dark:text-gray-400">
