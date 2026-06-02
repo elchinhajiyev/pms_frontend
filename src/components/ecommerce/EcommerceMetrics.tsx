@@ -1,59 +1,82 @@
-import {
-  ArrowDownIcon,
-  ArrowUpIcon,
-  BoxIconLine,
-  GroupIcon,
-} from "../../icons";
-import Badge from "../ui/badge/Badge";
+import { useEffect, useMemo, useState } from "react";
+import { BoxIconLine, GroupIcon } from "../../icons";
+import { userManagementService, User } from "../../services/userService";
+
+const matchesRole = (user: User, values: string[]) => {
+  const roleValues = [user.role_code, user.role_name]
+    .map((value) => String(value || "").trim().toLowerCase())
+    .filter(Boolean);
+
+  return roleValues.some((roleValue) =>
+    values.some((value) => roleValue.includes(value))
+  );
+};
 
 export default function EcommerceMetrics() {
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    userManagementService
+      .getAllUsers()
+      .then((response) => {
+        if (!isMounted) return;
+        setUsers(Array.isArray(response?.data) ? response.data : []);
+      })
+      .catch(() => {
+        if (isMounted) setUsers([]);
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const metrics = useMemo(
+    () => [
+      {
+        label: "Ümumi tələbə qeydiyyatı",
+        value: users.filter((user) =>
+          matchesRole(user, ["student", "tələbə", "telebe"])
+        ).length,
+        icon: <GroupIcon className="size-6 text-gray-800 dark:text-white/90" />,
+      },
+      {
+        label: "Müəllim qeydiyyatı",
+        value: users.filter((user) =>
+          matchesRole(user, ["teacher", "müəllim", "muellim"])
+        ).length,
+        icon: <BoxIconLine className="size-6 text-gray-800 dark:text-white/90" />,
+      },
+    ],
+    [users]
+  );
+
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6">
-      {/* <!-- Metric Item Start --> */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
-        <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-gray-800">
-          <GroupIcon className="text-gray-800 size-6 dark:text-white/90" />
-        </div>
-
-        <div className="flex items-end justify-between mt-5">
-          <div>
+      {metrics.map((metric) => (
+        <div
+          key={metric.label}
+          className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6"
+        >
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800">
+            {metric.icon}
+          </div>
+          <div className="mt-5">
             <span className="text-sm text-gray-500 dark:text-gray-400">
-              Customers
+              {metric.label}
             </span>
-            <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">
-              3,782
+            <h4 className="mt-2 text-title-sm font-bold text-gray-800 dark:text-white/90">
+              {loading ? "..." : metric.value.toLocaleString("az-AZ")}
             </h4>
           </div>
-          <Badge color="success">
-            <ArrowUpIcon />
-            11.01%
-          </Badge>
         </div>
-      </div>
-      {/* <!-- Metric Item End --> */}
-
-      {/* <!-- Metric Item Start --> */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
-        <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-gray-800">
-          <BoxIconLine className="text-gray-800 size-6 dark:text-white/90" />
-        </div>
-        <div className="flex items-end justify-between mt-5">
-          <div>
-            <span className="text-sm text-gray-500 dark:text-gray-400">
-              Orders
-            </span>
-            <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">
-              5,359
-            </h4>
-          </div>
-
-          <Badge color="error">
-            <ArrowDownIcon />
-            9.05%
-          </Badge>
-        </div>
-      </div>
-      {/* <!-- Metric Item End --> */}
+      ))}
     </div>
   );
 }

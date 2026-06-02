@@ -1,141 +1,169 @@
-import Chart from "react-apexcharts";
-import { ApexOptions } from "apexcharts";
-import { Dropdown } from "../ui/dropdown/Dropdown";
-import { DropdownItem } from "../ui/dropdown/DropdownItem";
-import { MoreDotIcon } from "../../icons";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { resolveUserPhotoUrl } from "../common/UserAvatar";
+import surveyService, {
+  Survey,
+  SurveyTeacherResultRow,
+} from "../../services/surveyService";
+
+const MAX_SCORE = 5;
+const CHART_HEIGHT = 220;
+
+const getFullName = (row: SurveyTeacherResultRow) =>
+  [row.last_name, row.first_name, row.middle_name].filter(Boolean).join(" ");
 
 export default function MonthlySalesChart() {
-  const options: ApexOptions = {
-    colors: ["#465fff"],
-    chart: {
-      fontFamily: "Outfit, sans-serif",
-      type: "bar",
-      height: 180,
-      toolbar: {
-        show: false,
-      },
-    },
-    plotOptions: {
-      bar: {
-        horizontal: false,
-        columnWidth: "39%",
-        borderRadius: 5,
-        borderRadiusApplication: "end",
-      },
-    },
-    dataLabels: {
-      enabled: false,
-    },
-    stroke: {
-      show: true,
-      width: 4,
-      colors: ["transparent"],
-    },
-    xaxis: {
-      categories: [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
-      ],
-      axisBorder: {
-        show: false,
-      },
-      axisTicks: {
-        show: false,
-      },
-    },
-    legend: {
-      show: true,
-      position: "top",
-      horizontalAlign: "left",
-      fontFamily: "Outfit",
-    },
-    yaxis: {
-      title: {
-        text: undefined,
-      },
-    },
-    grid: {
-      yaxis: {
-        lines: {
-          show: true,
-        },
-      },
-    },
-    fill: {
-      opacity: 1,
-    },
+  const [latestSurvey, setLatestSurvey] = useState<Survey | null>(null);
+  const [results, setResults] = useState<SurveyTeacherResultRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-    tooltip: {
-      x: {
-        show: false,
-      },
-      y: {
-        formatter: (val: number) => `${val}`,
-      },
-    },
-  };
-  const series = [
-    {
-      name: "Sales",
-      data: [168, 385, 201, 298, 187, 195, 291, 110, 215, 390, 280, 112],
-    },
-  ];
-  const [isOpen, setIsOpen] = useState(false);
+  useEffect(() => {
+    let isMounted = true;
 
-  function toggleDropdown() {
-    setIsOpen(!isOpen);
-  }
+    const load = async () => {
+      setLoading(true);
+      setError("");
 
-  function closeDropdown() {
-    setIsOpen(false);
-  }
+      try {
+        const surveysResponse = await surveyService.getAll();
+        const surveys = Array.isArray(surveysResponse?.data)
+          ? surveysResponse.data
+          : [];
+        const newestSurvey = [...surveys].sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        )[0];
+
+        if (!newestSurvey) {
+          if (isMounted) {
+            setLatestSurvey(null);
+            setResults([]);
+          }
+          return;
+        }
+
+        const resultsResponse = await surveyService.getTeacherResultsBySurvey(
+          Number(newestSurvey.id)
+        );
+
+        if (isMounted) {
+          setLatestSurvey(newestSurvey);
+          setResults(Array.isArray(resultsResponse?.data) ? resultsResponse.data : []);
+        }
+      } catch (requestError: any) {
+        if (isMounted) {
+          setError(
+            requestError?.response?.data?.message ||
+              "Son sorğunun nəticələri yüklənmədi"
+          );
+          setResults([]);
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    load();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const topResults = useMemo(
+    () =>
+      results
+        .filter((row) => Number.isFinite(Number(row.overall_average_score)))
+        .sort(
+          (a, b) =>
+            Number(b.overall_average_score) - Number(a.overall_average_score)
+        )
+        .slice(0, 50),
+    [results]
+  );
+
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
-      <div className="flex items-center justify-between">
+      <div>
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-          Monthly Sales
+          Son sorğunun nəticələri
         </h3>
-        <div className="relative inline-block">
-          <button className="dropdown-toggle" onClick={toggleDropdown}>
-            <MoreDotIcon className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 size-6" />
-          </button>
-          <Dropdown
-            isOpen={isOpen}
-            onClose={closeDropdown}
-            className="w-40 p-2"
-          >
-            <DropdownItem
-              onItemClick={closeDropdown}
-              className="flex w-full font-normal text-left text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
-            >
-              View More
-            </DropdownItem>
-            <DropdownItem
-              onItemClick={closeDropdown}
-              className="flex w-full font-normal text-left text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
-            >
-              Delete
-            </DropdownItem>
-          </Dropdown>
-        </div>
+        {latestSurvey && (
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            {latestSurvey.title} · ən yüksək orta bal toplayan {topResults.length} müəllim
+          </p>
+        )}
       </div>
 
-      <div className="max-w-full overflow-x-auto custom-scrollbar">
-        <div className="-ml-5 min-w-[650px] xl:min-w-full pl-2">
-          <Chart options={options} series={series} type="bar" height={180} />
+      {loading ? (
+        <div className="grid h-[300px] place-items-center text-sm text-gray-500 dark:text-gray-400">
+          Yüklənir...
         </div>
-      </div>
+      ) : error ? (
+        <div className="my-5 rounded-lg bg-red-50 px-3 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-300">
+          {error}
+        </div>
+      ) : topResults.length === 0 ? (
+        <div className="grid h-[300px] place-items-center text-sm text-gray-500 dark:text-gray-400">
+          Sorğu nəticəsi tapılmadı.
+        </div>
+      ) : (
+        <div className="mt-5 overflow-x-auto pb-4">
+          <div className="flex min-w-max">
+            <div className="mr-3 grid shrink-0 grid-rows-[220px_42px]">
+              <div className="flex w-7 flex-col justify-between pb-1 text-right text-[11px] text-gray-400">
+                {[5, 4, 3, 2, 1, 0].map((score) => (
+                  <span key={score}>{score}</span>
+                ))}
+              </div>
+            </div>
+
+            <div className="relative flex h-[262px] items-start gap-3 border-b border-gray-200 dark:border-gray-700">
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-[220px]">
+                {[0, 1, 2, 3, 4, 5].map((line) => (
+                  <div
+                    key={line}
+                    className="absolute inset-x-0 border-t border-dashed border-gray-200 dark:border-gray-800"
+                    style={{ top: `${(line / 5) * 100}%` }}
+                  />
+                ))}
+              </div>
+
+              {topResults.map((row) => {
+                const score = Number(row.overall_average_score || 0);
+                const fullName = getFullName(row);
+
+                return (
+                  <div
+                    key={row.teacher_id}
+                    className="relative z-10 grid w-12 shrink-0 grid-rows-[220px_42px]"
+                    title={`${fullName}: ${score.toFixed(2)}`}
+                  >
+                    <div className="flex flex-col items-center justify-end">
+                      <span className="mb-1 text-[10px] font-medium text-gray-600 dark:text-gray-300">
+                        {score.toFixed(2)}
+                      </span>
+                      <div
+                        className="w-7 rounded-t-md bg-brand-500 transition hover:bg-brand-600"
+                        style={{
+                          height: `${Math.max(4, (score / MAX_SCORE) * (CHART_HEIGHT - 22))}px`,
+                        }}
+                      />
+                    </div>
+                    <div className="flex items-end justify-center pb-1">
+                      <img
+                        src={resolveUserPhotoUrl(row.photo)}
+                        alt={fullName}
+                        className="h-8 w-8 rounded-full border border-gray-200 bg-gray-100 object-cover dark:border-gray-700"
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
