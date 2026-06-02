@@ -44,7 +44,7 @@ export default function TextbooksMonitoringPage() {
     setError("");
 
     try {
-      const res = await teachingProgramService.getForMonitoring(filterStatus || undefined, "textbooks", user?.id);
+      const res = await teachingProgramService.getForMonitoring(filterStatus || undefined, "textbooks");
       const data = Array.isArray(res?.data) ? res.data : [];
       setItems(data);
     } catch (err: any) {

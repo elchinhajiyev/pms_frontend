@@ -44,7 +44,7 @@ export default function TeachingProgramsMonitoringPage() {
     setError("");
 
     try {
-      const res = await teachingProgramService.getForMonitoring(filterStatus || undefined, undefined, user?.id);
+      const res = await teachingProgramService.getForMonitoring(filterStatus || undefined);
       const data = Array.isArray(res?.data) ? res.data : [];
       setItems(data);
     } catch (err: any) {

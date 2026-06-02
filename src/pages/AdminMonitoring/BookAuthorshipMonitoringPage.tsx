@@ -44,7 +44,7 @@ export default function BookAuthorshipMonitoringPage() {
     setError("");
 
     try {
-      const res = await bookAuthorshipService.getForMonitoring(filterStatus || undefined, user?.id);
+      const res = await bookAuthorshipService.getForMonitoring(filterStatus || undefined);
       const data = Array.isArray(res?.data) ? res.data : [];
       setItems(data);
     } catch (err: any) {

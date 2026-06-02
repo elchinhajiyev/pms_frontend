@@ -132,11 +132,10 @@ const teachingProgramService = {
     return { ...response.data, data } as { data: TeachingProgramItem }
   },
 
-  async getForMonitoring(status?: string, category?: string, userId?: number) {
+  async getForMonitoring(status?: string, category?: string) {
     const params = new URLSearchParams()
     if (status) params.set('status', status)
     if (category) params.set('category', category)
-    if (Number.isFinite(userId)) params.set('user_id', String(userId))
     const query = params.toString()
     const response = await api.get(`/evaluation/teaching-programs/monitoring${query ? `?${query}` : ''}`)
     const data = normalizeItems(response.data?.data)

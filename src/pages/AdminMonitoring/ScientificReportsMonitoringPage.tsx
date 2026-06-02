@@ -44,7 +44,7 @@ export default function ScientificReportsMonitoringPage() {
     setError("");
 
     try {
-      const res = await scientificReportService.getForMonitoring(filterStatus || undefined, user?.id);
+      const res = await scientificReportService.getForMonitoring(filterStatus || undefined);
       const data = Array.isArray(res?.data) ? res.data : [];
       setItems(data);
     } catch (err: any) {

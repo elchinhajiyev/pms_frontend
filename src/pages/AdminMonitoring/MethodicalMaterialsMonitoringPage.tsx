@@ -30,7 +30,7 @@ export default function MethodicalMaterialsMonitoringPage() {
     }
 
     setLoading(true); setError("");
-    try { const res = await teachingProgramService.getForMonitoring(filterStatus || undefined, "methodical_materials", user?.id); setItems(Array.isArray(res?.data) ? res.data : []); } catch (err: any) { setError(err?.response?.data?.message || "Monitorinq siyahısı yüklənmədi"); setItems([]); } finally { setLoading(false); }
+    try { const res = await teachingProgramService.getForMonitoring(filterStatus || undefined, "methodical_materials"); setItems(Array.isArray(res?.data) ? res.data : []); } catch (err: any) { setError(err?.response?.data?.message || "Monitorinq siyahısı yüklənmədi"); setItems([]); } finally { setLoading(false); }
   };
 
   useEffect(() => { load(); }, [filterStatus, user?.id]);
