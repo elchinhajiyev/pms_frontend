@@ -83,13 +83,6 @@ export interface SurveyTeacherResultsResponse {
   }
 }
 
-export interface SurveyParticipationSummary {
-  total_students: number
-  participated_students: number
-  not_participated_students: number
-  participation_percentage: number
-}
-
 const surveyService = {
   async getAll() {
     const response = await api.get('/evaluation/surveys')
@@ -119,11 +112,6 @@ const surveyService = {
   async getTeacherResultsBySurvey(surveyId: number) {
     const response = await api.get(`/evaluation/surveys/${surveyId}/teacher-results`)
     return response.data as SurveyTeacherResultsResponse
-  },
-
-  async getParticipationSummary(surveyId: number) {
-    const response = await api.get(`/evaluation/surveys/${surveyId}/participation-summary`)
-    return response.data as { data: SurveyParticipationSummary }
   },
 
   async resetResponses(surveyId: number) {

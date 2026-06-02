@@ -1,21 +1,40 @@
 import { useEffect, useMemo, useState } from "react";
 import Chart from "react-apexcharts";
 import { ApexOptions } from "apexcharts";
-import surveyService, {
-  Survey,
-  SurveyParticipationSummary,
-} from "../../services/surveyService";
+import surveyService, { Survey } from "../../services/surveyService";
+import teacherSurveyService from "../../services/teacherSurveyService";
+import { userManagementService, User } from "../../services/userService";
 
-const emptySummary: SurveyParticipationSummary = {
+type ParticipationSummary = {
+  total_students: number;
+  participated_students: number;
+  not_participated_students: number;
+  participation_percentage: number;
+};
+
+const emptySummary: ParticipationSummary = {
   total_students: 0,
   participated_students: 0,
   not_participated_students: 0,
   participation_percentage: 0,
 };
 
+const isStudent = (user: User) => {
+  const values = [user.role_code, user.role_name]
+    .map((value) => String(value || "").trim().toLowerCase())
+    .filter(Boolean);
+
+  return values.some(
+    (value) =>
+      value.includes("student") ||
+      value.includes("tələbə") ||
+      value.includes("telebe")
+  );
+};
+
 export default function MonthlyTarget() {
   const [latestSurvey, setLatestSurvey] = useState<Survey | null>(null);
-  const [summary, setSummary] = useState<SurveyParticipationSummary>(emptySummary);
+  const [summary, setSummary] = useState<ParticipationSummary>(emptySummary);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -44,19 +63,56 @@ export default function MonthlyTarget() {
           return;
         }
 
-        const summaryResponse = await surveyService.getParticipationSummary(
-          Number(newestSurvey.id)
+        const [usersResponse, resultsResponse] = await Promise.all([
+          userManagementService.getAllUsers(),
+          surveyService.getTeacherResultsBySurvey(Number(newestSurvey.id)),
+        ]);
+        const users = Array.isArray(usersResponse?.data) ? usersResponse.data : [];
+        const teacherResults = Array.isArray(resultsResponse?.data)
+          ? resultsResponse.data
+          : [];
+        const participantResponses = await Promise.all(
+          teacherResults.map((teacher) =>
+            teacherSurveyService.getTeacherSurveyParticipants(
+              Number(teacher.teacher_id),
+              Number(newestSurvey.id)
+            )
+          )
         );
+        const participatedStudentIds = new Set<number>();
+
+        participantResponses.forEach((response) => {
+          const participants = Array.isArray(response?.data) ? response.data : [];
+          participants.forEach((participant) => {
+            if (participant.has_participated) {
+              participatedStudentIds.add(Number(participant.participant_id));
+            }
+          });
+        });
+
+        const totalStudents = users.filter(isStudent).length;
+        const participatedStudents = participatedStudentIds.size;
 
         if (isMounted) {
           setLatestSurvey(newestSurvey);
-          setSummary(summaryResponse?.data || emptySummary);
+          setSummary({
+            total_students: totalStudents,
+            participated_students: participatedStudents,
+            not_participated_students: Math.max(
+              totalStudents - participatedStudents,
+              0
+            ),
+            participation_percentage:
+              totalStudents > 0
+                ? Number(((participatedStudents / totalStudents) * 100).toFixed(2))
+                : 0,
+          });
         }
       } catch (requestError: any) {
         if (isMounted) {
           const responseError = requestError?.response?.data;
           setError(
-            [responseError?.message, responseError?.error_detail]
+            [responseError?.message, responseError?.error_detail, requestError?.message]
               .filter(Boolean)
               .join(" | ") ||
               "İştirak statistikası yüklənmədi"
