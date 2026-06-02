@@ -395,7 +395,7 @@ const AppSidebar: React.FC = () => {
                 )}
               </div>
             )}
-            {hasMonitoringAccess && (
+            {(isAdmin || hasMonitoringAccess) && (
               <div className="">
                 <h2
                   className={`mb-4 text-xs  flex leading-[20px] text-gray-400 ${

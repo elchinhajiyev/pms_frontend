@@ -21,6 +21,7 @@ const statusLabel = (status?: string) => {
 
 export default function TextbooksMonitoringPage() {
   const { user } = useAuth();
+  const canModerate = String(user?.role_code || "").toUpperCase() !== "ADMIN";
 
   const [items, setItems] = useState<TeachingProgramItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -337,7 +338,7 @@ export default function TextbooksMonitoringPage() {
                     setShowRejectBox(true);
                     setModalError("");
                   }}
-                  className="rounded-md bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:opacity-60"
+                  className={`${canModerate ? "" : "hidden "}rounded-md bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:opacity-60`}
                 >
                   İmtina et
                 </button>
@@ -356,7 +357,7 @@ export default function TextbooksMonitoringPage() {
               <button
                 disabled={selectedItem.status === "approved" || processingId === selectedItem.id}
                 onClick={() => handleApprove(selectedItem)}
-                className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
+                className={`${canModerate ? "" : "hidden "}rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60`}
               >
                 Təsdiq et
               </button>
