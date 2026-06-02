@@ -54,8 +54,11 @@ export default function MonthlyTarget() {
         }
       } catch (requestError: any) {
         if (isMounted) {
+          const responseError = requestError?.response?.data;
           setError(
-            requestError?.response?.data?.message ||
+            [responseError?.message, responseError?.error_detail]
+              .filter(Boolean)
+              .join(" | ") ||
               "İştirak statistikası yüklənmədi"
           );
           setSummary(emptySummary);
