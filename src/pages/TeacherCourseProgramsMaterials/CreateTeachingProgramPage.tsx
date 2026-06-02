@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { useNavigate, useParams } from "react-router";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
@@ -7,6 +7,7 @@ import { useAuth } from "../../context/AuthContext";
 import { evaluationParameterService, EvaluationParameter } from "../../services/evaluationService";
 import teachingProgramService from "../../services/teachingProgramService";
 import { useHelperToolOptions } from "../../hooks/useHelperToolOptions";
+import SelectedFilePreview from "../../components/form/SelectedFilePreview";
 
 export default function CreateTeachingProgramPage() {
   const navigate = useNavigate();
@@ -64,12 +65,6 @@ export default function CreateTeachingProgramPage() {
     onDrop,
     multiple: false
   });
-
-  const selectedFileLabel = useMemo(() => {
-    if (!selectedFile) return "";
-    const sizeMb = (selectedFile.size / (1024 * 1024)).toFixed(2);
-    return `${selectedFile.name} (${sizeMb} MB)`;
-  }, [selectedFile]);
 
   useEffect(() => {
     loadCategories();
@@ -278,10 +273,8 @@ export default function CreateTeachingProgramPage() {
                 <p className="text-sm text-gray-600 dark:text-gray-300">
                   {isDragActive ? "Faylı buraxın..." : "Faylı bura sürükləyin və ya klik edib seçin"}
                 </p>
-                {selectedFileLabel && (
-                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Seçilən: {selectedFileLabel}</p>
-                )}
-                {!selectedFileLabel && existingFileName && (
+                <SelectedFilePreview file={selectedFile} onRemove={() => setSelectedFile(null)} />
+                {!selectedFile && existingFileName && (
                   <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Mövcud fayl: {existingFileName}</p>
                 )}
               </div>

@@ -51,7 +51,7 @@ export default function TeachingProgramsListPage() {
     setError("");
 
     try {
-      const res = await teachingProgramService.getByUser(user.id);
+      const res = await teachingProgramService.getByUser(user.id, "course_programs");
       const data = Array.isArray(res?.data) ? res.data : [];
       setItems(data);
     } catch (err: any) {

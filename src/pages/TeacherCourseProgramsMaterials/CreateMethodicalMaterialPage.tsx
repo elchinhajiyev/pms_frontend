@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { useNavigate, useParams } from "react-router";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
@@ -7,6 +7,7 @@ import { useAuth } from "../../context/AuthContext";
 import { evaluationParameterService, EvaluationParameter } from "../../services/evaluationService";
 import teachingProgramService from "../../services/teachingProgramService";
 import { useHelperToolOptions } from "../../hooks/useHelperToolOptions";
+import SelectedFilePreview from "../../components/form/SelectedFilePreview";
 
 export default function CreateMethodicalMaterialPage() {
   const navigate = useNavigate();
@@ -38,7 +39,6 @@ export default function CreateMethodicalMaterialPage() {
 
   const onDrop = (acceptedFiles: File[]) => { if (acceptedFiles?.length) setSelectedFile(acceptedFiles[0]); };
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, multiple: false });
-  const selectedFileLabel = useMemo(() => selectedFile ? `${selectedFile.name} (${(selectedFile.size / (1024 * 1024)).toFixed(2)} MB)` : "", [selectedFile]);
 
   useEffect(() => { loadCategories(); }, []);
 
@@ -91,7 +91,7 @@ export default function CreateMethodicalMaterialPage() {
             <div className="md:col-span-2"><label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Kateqoriya *</label><select value={categoryId} onFocus={loadCategories} onChange={(e) => setCategoryId(e.target.value)} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"><option value="">Kateqoriya seçin</option>{categories.map((category) => <option key={category.id} value={String(category.id)}>{category.name}</option>)}</select></div>
             <div className="md:col-span-2"><label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Qısa məlumat</label><textarea rows={3} value={summary} onChange={(e) => setSummary(e.target.value)} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white" placeholder="Qısa məlumat daxil edin" /></div>
             <div className="md:col-span-2"><label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Link</label><input type="url" value={link} onChange={(e) => setLink(e.target.value)} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white" placeholder="https://..." /></div>
-            <div className="md:col-span-2"><label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Faylı yükləyin (drag and drop)</label><div {...getRootProps()} className={`cursor-pointer rounded-xl border border-dashed p-6 text-center transition ${isDragActive ? "border-brand-500 bg-brand-50 dark:bg-brand-500/10" : "border-gray-300 hover:border-brand-400 dark:border-gray-700"}`}><input {...getInputProps()} /><p className="text-sm text-gray-600 dark:text-gray-300">{isDragActive ? "Faylı buraxın..." : "Faylı bura sürükləyin və ya klik edib seçin"}</p>{selectedFileLabel && <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Seçilən: {selectedFileLabel}</p>}{!selectedFileLabel && existingFileName && <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Mövcud fayl: {existingFileName}</p>}</div></div>
+            <div className="md:col-span-2"><label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Faylı yükləyin (drag and drop)</label><div {...getRootProps()} className={`cursor-pointer rounded-xl border border-dashed p-6 text-center transition ${isDragActive ? "border-brand-500 bg-brand-50 dark:bg-brand-500/10" : "border-gray-300 hover:border-brand-400 dark:border-gray-700"}`}><input {...getInputProps()} /><p className="text-sm text-gray-600 dark:text-gray-300">{isDragActive ? "Faylı buraxın..." : "Faylı bura sürükləyin və ya klik edib seçin"}</p><SelectedFilePreview file={selectedFile} onRemove={() => setSelectedFile(null)} />{!selectedFile && existingFileName && <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Mövcud fayl: {existingFileName}</p>}</div></div>
           </div>
           {error && <p className="rounded-lg bg-red-100 px-3 py-2 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-300">{error}</p>}
           <div className="flex justify-end gap-3"><button type="button" onClick={() => navigate("/usercoursemethodicalmaterials")} className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">Ləğv et</button><button type="submit" disabled={saving || loadingRecord} className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-60">{saving ? "Yadda saxlanılır..." : isEditMode ? "Dəyişiklikləri yadda saxla" : "Yadda saxla"}</button></div>

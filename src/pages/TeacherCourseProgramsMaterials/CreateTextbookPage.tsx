@@ -6,6 +6,7 @@ import PageMeta from "../../components/common/PageMeta";
 import { useAuth } from "../../context/AuthContext";
 import { evaluationParameterService, EvaluationParameter } from "../../services/evaluationService";
 import teachingProgramService from "../../services/teachingProgramService";
+import SelectedFilePreview from "../../components/form/SelectedFilePreview";
 
 export default function CreateTextbookPage() {
   const navigate = useNavigate();
@@ -76,12 +77,6 @@ export default function CreateTextbookPage() {
     onDrop,
     multiple: false
   });
-
-  const selectedFileLabel = useMemo(() => {
-    if (!selectedFile) return "";
-    const sizeMb = (selectedFile.size / (1024 * 1024)).toFixed(2);
-    return `${selectedFile.name} (${sizeMb} MB)`;
-  }, [selectedFile]);
 
   useEffect(() => {
     loadCategories();
@@ -288,10 +283,8 @@ export default function CreateTextbookPage() {
                 <p className="text-sm text-gray-600 dark:text-gray-300">
                   {isDragActive ? "Faylı buraxın..." : "Faylı bura sürükləyin və ya klik edib seçin"}
                 </p>
-                {selectedFileLabel && (
-                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Seçilən: {selectedFileLabel}</p>
-                )}
-                {!selectedFileLabel && existingFileName && (
+                <SelectedFilePreview file={selectedFile} onRemove={() => setSelectedFile(null)} />
+                {!selectedFile && existingFileName && (
                   <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Mövcud fayl: {existingFileName}</p>
                 )}
               </div>
