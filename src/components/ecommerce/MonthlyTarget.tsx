@@ -148,7 +148,7 @@ export default function MonthlyTarget() {
         radialBar: {
           startAngle: -90,
           endAngle: 90,
-          hollow: { size: "76%" },
+          hollow: { size: "72%" },
           track: {
             background: "#E4E7EC",
             strokeWidth: "100%",
@@ -157,7 +157,7 @@ export default function MonthlyTarget() {
           dataLabels: {
             name: { show: false },
             value: {
-              fontSize: "34px",
+              fontSize: "38px",
               fontWeight: "600",
               offsetY: -34,
               color: "#1D2939",
@@ -195,15 +195,16 @@ export default function MonthlyTarget() {
           </div>
         ) : (
           <>
-            <div className="relative mt-auto">
+            <div className="mt-auto flex min-h-[300px] items-center justify-center">
               <Chart
                 options={options}
                 series={series}
                 type="radialBar"
-                height={265}
+                height={310}
+                width={420}
               />
             </div>
-            <p className="mx-auto mb-6 -mt-5 max-w-[360px] text-center text-sm text-gray-500 dark:text-gray-400">
+            <p className="mx-auto mb-6 max-w-[360px] text-center text-sm text-gray-500 dark:text-gray-400">
               Ümumi tələbələrin {percentage.toFixed(1)}%-i son sorğuda iştirak edib.
             </p>
           </>
