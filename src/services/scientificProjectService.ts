@@ -127,27 +127,23 @@ const scientificProjectService = {
     return { ...response.data, data } as { data: ScientificProjectItem }
   },
 
-  async getForMonitoring(status?: string, userId?: number) {
+  async getForMonitoring(status?: string) {
     const params = new URLSearchParams()
     if (status) params.set('status', status)
-    if (Number.isFinite(userId)) params.set('user_id', String(userId))
     const query = params.toString()
     const response = await api.get(`/evaluation/scientific-projects/monitoring${query ? `?${query}` : ''}`)
     const data = normalizeItems(response.data?.data)
     return { ...response.data, data } as { data: ScientificProjectItem[] }
   },
 
-  async approve(id: number, approvedBy: number) {
-    const response = await api.put(`/evaluation/scientific-projects/${id}/approve`, {
-      approved_by: approvedBy
-    })
+  async approve(id: number) {
+    const response = await api.put(`/evaluation/scientific-projects/${id}/approve`)
     const data = normalizeItem(response.data?.data)
     return { ...response.data, data } as { data: ScientificProjectItem }
   },
 
-  async reject(id: number, approvedBy: number, rejectionReason: string) {
+  async reject(id: number, rejectionReason: string) {
     const response = await api.put(`/evaluation/scientific-projects/${id}/reject`, {
-      approved_by: approvedBy,
       rejection_reason: rejectionReason
     })
     const data = normalizeItem(response.data?.data)

@@ -44,7 +44,7 @@ export default function TeachingProgramsMonitoringPage() {
     setError("");
 
     try {
-      const res = await teachingProgramService.getForMonitoring(filterStatus || undefined, undefined, user?.id);
+      const res = await teachingProgramService.getForMonitoring(filterStatus || undefined);
       const data = Array.isArray(res?.data) ? res.data : [];
       setItems(data);
     } catch (err: any) {
@@ -70,7 +70,7 @@ export default function TeachingProgramsMonitoringPage() {
     setProcessingId(item.id);
     setError("");
     try {
-      await teachingProgramService.approve(item.id, user.id);
+      await teachingProgramService.approve(item.id);
       await load();
       if (selectedItem?.id === item.id) {
         setSelectedItem(null);
@@ -98,7 +98,7 @@ export default function TeachingProgramsMonitoringPage() {
     setError("");
     setModalError("");
     try {
-      await teachingProgramService.reject(item.id, user.id, reason.trim());
+      await teachingProgramService.reject(item.id, reason.trim());
       await load();
       if (selectedItem?.id === item.id) {
         setSelectedItem(null);
