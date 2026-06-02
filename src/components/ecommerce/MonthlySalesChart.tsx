@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { Link } from "react-router";
 import { resolveUserPhotoUrl } from "../common/UserAvatar";
 import surveyService, {
   Survey,
@@ -11,11 +13,44 @@ const CHART_HEIGHT = 220;
 const getFullName = (row: SurveyTeacherResultRow) =>
   [row.last_name, row.first_name, row.middle_name].filter(Boolean).join(" ");
 
+type HoveredTeacher = {
+  row: SurveyTeacherResultRow;
+  top: number;
+  left: number;
+};
+
 export default function MonthlySalesChart() {
   const [latestSurvey, setLatestSurvey] = useState<Survey | null>(null);
   const [results, setResults] = useState<SurveyTeacherResultRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [hoveredTeacher, setHoveredTeacher] = useState<HoveredTeacher | null>(null);
+  const closeTooltipTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const cancelTooltipClose = () => {
+    if (closeTooltipTimeout.current) {
+      clearTimeout(closeTooltipTimeout.current);
+      closeTooltipTimeout.current = null;
+    }
+  };
+
+  const scheduleTooltipClose = () => {
+    cancelTooltipClose();
+    closeTooltipTimeout.current = setTimeout(() => setHoveredTeacher(null), 150);
+  };
+
+  const showTeacherTooltip = (
+    row: SurveyTeacherResultRow,
+    element: HTMLElement
+  ) => {
+    cancelTooltipClose();
+    const rect = element.getBoundingClientRect();
+    setHoveredTeacher({
+      row,
+      top: rect.top - 8,
+      left: rect.left + rect.width / 2,
+    });
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -67,6 +102,7 @@ export default function MonthlySalesChart() {
 
     return () => {
       isMounted = false;
+      cancelTooltipClose();
     };
   }, []);
 
@@ -150,7 +186,13 @@ export default function MonthlySalesChart() {
                         }}
                       />
                     </div>
-                    <div className="flex items-end justify-center pb-1">
+                    <div
+                      className="flex items-end justify-center pb-1"
+                      onMouseEnter={(event) =>
+                        showTeacherTooltip(row, event.currentTarget)
+                      }
+                      onMouseLeave={scheduleTooltipClose}
+                    >
                       <img
                         src={resolveUserPhotoUrl(row.photo)}
                         alt={fullName}
@@ -164,6 +206,32 @@ export default function MonthlySalesChart() {
           </div>
         </div>
       )}
+
+      {hoveredTeacher &&
+        createPortal(
+          <div
+            className="fixed z-[999999] w-64 -translate-x-1/2 -translate-y-full rounded-lg border border-gray-200 bg-white p-3 shadow-xl dark:border-gray-700 dark:bg-gray-900"
+            style={{ top: hoveredTeacher.top, left: hoveredTeacher.left }}
+            onMouseEnter={cancelTooltipClose}
+            onMouseLeave={scheduleTooltipClose}
+          >
+            <Link
+              to={`/profile?userId=${hoveredTeacher.row.teacher_id}`}
+              className="text-sm font-medium text-brand-600 hover:underline dark:text-brand-400"
+            >
+              {[hoveredTeacher.row.last_name, hoveredTeacher.row.first_name]
+                .filter(Boolean)
+                .join(" ") || "-"}
+            </Link>
+            <p className="mt-1 text-xs text-gray-600 dark:text-gray-300">
+              Ata adı: {hoveredTeacher.row.middle_name || "-"}
+            </p>
+            <p className="mt-1 text-xs text-gray-600 dark:text-gray-300">
+              Departament: {hoveredTeacher.row.department_name || "-"}
+            </p>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
