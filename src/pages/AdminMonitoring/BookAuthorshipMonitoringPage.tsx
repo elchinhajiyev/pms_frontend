@@ -44,7 +44,7 @@ export default function BookAuthorshipMonitoringPage() {
     setError("");
 
     try {
-      const res = await bookAuthorshipService.getForMonitoring(filterStatus || undefined);
+      const res = await bookAuthorshipService.getForMonitoring(filterStatus || undefined, user?.id);
       const data = Array.isArray(res?.data) ? res.data : [];
       setItems(data);
     } catch (err: any) {
@@ -70,7 +70,7 @@ export default function BookAuthorshipMonitoringPage() {
     setProcessingId(item.id);
     setError("");
     try {
-      await bookAuthorshipService.approve(item.id);
+      await bookAuthorshipService.approve(item.id, user.id);
       await load();
       if (selectedItem?.id === item.id) {
         setSelectedItem(null);
@@ -98,7 +98,7 @@ export default function BookAuthorshipMonitoringPage() {
     setError("");
     setModalError("");
     try {
-      await bookAuthorshipService.reject(item.id, reason.trim());
+      await bookAuthorshipService.reject(item.id, user.id, reason.trim());
       await load();
       if (selectedItem?.id === item.id) {
         setSelectedItem(null);

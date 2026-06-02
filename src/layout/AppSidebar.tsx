@@ -85,7 +85,7 @@ const AppSidebar: React.FC = () => {
       }
 
       try {
-        const res = await departmentService.getMonitoringAccess();
+        const res = await departmentService.getMonitoringAccess(user.id);
         const hasAccess = !!res?.data?.hasAccess;
         if (isMounted) {
           setHasMonitoringAccess(hasAccess);

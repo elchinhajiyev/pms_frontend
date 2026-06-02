@@ -1,5 +1,4 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router";
-import { useEffect, useState } from "react";
 import SignIn from "./pages/AuthPages/SignIn";
 import SignUp from "./pages/AuthPages/SignUp";
 import NotFound from "./pages/OtherPage/NotFound";
@@ -69,7 +68,6 @@ import MethodicalMaterialsListPage from "./pages/TeacherCourseProgramsMaterials/
 import CreateMethodicalMaterialPage from "./pages/TeacherCourseProgramsMaterials/CreateMethodicalMaterialPage";
 import MethodicalMaterialsMonitoringPage from "./pages/AdminMonitoring/MethodicalMaterialsMonitoringPage";
 import TaskManagerPage from "./pages/Tasks/TaskManagerPage";
-import departmentService from "./services/departmentService";
 
 function ProtectedRoute() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -79,41 +77,6 @@ function ProtectedRoute() {
   }
 
   return isAuthenticated ? <Outlet /> : <Navigate to="/signin" replace />;
-}
-
-function MonitoringRoute() {
-  const { user } = useAuth();
-  const [hasAccess, setHasAccess] = useState<boolean | null>(null);
-  const isAdmin = String(user?.role_code || "").toUpperCase() === "ADMIN";
-
-  useEffect(() => {
-    let isMounted = true;
-
-    if (isAdmin) {
-      setHasAccess(true);
-      return;
-    }
-
-    setHasAccess(null);
-    departmentService
-      .getMonitoringAccess()
-      .then((response) => {
-        if (isMounted) setHasAccess(Boolean(response?.data?.hasAccess));
-      })
-      .catch(() => {
-        if (isMounted) setHasAccess(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [isAdmin, user?.id]);
-
-  if (hasAccess === null) {
-    return <div className="p-6">Yüklənir...</div>;
-  }
-
-  return hasAccess ? <Outlet /> : <Navigate to="/" replace />;
 }
 
 export default function App() {
@@ -188,16 +151,14 @@ export default function App() {
               <Route path="/usercoursemethodicalmaterials" element={<MethodicalMaterialsListPage />} />
               <Route path="/usercoursemethodicalmaterials/new" element={<CreateMethodicalMaterialPage />} />
               <Route path="/usercoursemethodicalmaterials/:id/edit" element={<CreateMethodicalMaterialPage />} />
-              <Route element={<MonitoringRoute />}>
-                <Route path="/monitoring/scientific-reports" element={<ScientificReportsMonitoringPage />} />
-                <Route path="/monitoring/book-authorship" element={<BookAuthorshipMonitoringPage />} />
-                <Route path="/monitoring/scientific-publications" element={<ScientificPublicationsMonitoringPage />} />
-                <Route path="/monitoring/scientific-projects" element={<ScientificProjectsMonitoringPage />} />
-                <Route path="/monitoring/teaching-programs" element={<TeachingProgramsMonitoringPage />} />
-                <Route path="/monitoring/textbooks" element={<TextbooksMonitoringPage />} />
-                <Route path="/monitoring/course-materials" element={<CourseMaterialsMonitoringPage />} />
-                <Route path="/monitoring/methodical-materials" element={<MethodicalMaterialsMonitoringPage />} />
-              </Route>
+              <Route path="/monitoring/scientific-reports" element={<ScientificReportsMonitoringPage />} />
+              <Route path="/monitoring/book-authorship" element={<BookAuthorshipMonitoringPage />} />
+              <Route path="/monitoring/scientific-publications" element={<ScientificPublicationsMonitoringPage />} />
+              <Route path="/monitoring/scientific-projects" element={<ScientificProjectsMonitoringPage />} />
+              <Route path="/monitoring/teaching-programs" element={<TeachingProgramsMonitoringPage />} />
+              <Route path="/monitoring/textbooks" element={<TextbooksMonitoringPage />} />
+              <Route path="/monitoring/course-materials" element={<CourseMaterialsMonitoringPage />} />
+              <Route path="/monitoring/methodical-materials" element={<MethodicalMaterialsMonitoringPage />} />
 
               {/* Others Page */}
               <Route path="/profile" element={<UserProfiles />} />

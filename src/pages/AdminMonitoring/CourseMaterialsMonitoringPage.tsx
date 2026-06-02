@@ -32,7 +32,7 @@ export default function CourseMaterialsMonitoringPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await teachingProgramService.getForMonitoring(filterStatus || undefined, "course_materials");
+      const res = await teachingProgramService.getForMonitoring(filterStatus || undefined, "course_materials", user?.id);
       setItems(Array.isArray(res?.data) ? res.data : []);
     } catch (err: any) {
       setError(err?.response?.data?.message || "Monitorinq siyahısı yüklənmədi");
@@ -46,14 +46,14 @@ export default function CourseMaterialsMonitoringPage() {
   const handleApprove = async (item: TeachingProgramItem) => {
     if (!user?.id) return;
     setProcessingId(item.id); setError("");
-    try { await teachingProgramService.approve(item.id); await load(); if (selectedItem?.id === item.id) { setSelectedItem(null); setShowRejectBox(false); setRejectReason(""); setModalError(""); } } catch (err: any) { const message = err?.response?.data?.message || "Təsdiq etmək mümkün olmadı"; setError(message); setModalError(message); } finally { setProcessingId(null); }
+    try { await teachingProgramService.approve(item.id, user.id); await load(); if (selectedItem?.id === item.id) { setSelectedItem(null); setShowRejectBox(false); setRejectReason(""); setModalError(""); } } catch (err: any) { const message = err?.response?.data?.message || "Təsdiq etmək mümkün olmadı"; setError(message); setModalError(message); } finally { setProcessingId(null); }
   };
 
   const handleReject = async (item: TeachingProgramItem, reason: string) => {
     if (!user?.id) return;
     if (!reason.trim()) return setModalError("İmtina səbəbi boş ola bilməz");
     setProcessingId(item.id); setError(""); setModalError("");
-    try { await teachingProgramService.reject(item.id, reason.trim()); await load(); if (selectedItem?.id === item.id) { setSelectedItem(null); setShowRejectBox(false); setRejectReason(""); setModalError(""); } } catch (err: any) { const message = err?.response?.data?.message || "İmtina etmək mümkün olmadı"; setError(message); setModalError(message); } finally { setProcessingId(null); }
+    try { await teachingProgramService.reject(item.id, user.id, reason.trim()); await load(); if (selectedItem?.id === item.id) { setSelectedItem(null); setShowRejectBox(false); setRejectReason(""); setModalError(""); } } catch (err: any) { const message = err?.response?.data?.message || "İmtina etmək mümkün olmadı"; setError(message); setModalError(message); } finally { setProcessingId(null); }
   };
 
   const openDetailsModal = (item: TeachingProgramItem) => { setSelectedItem(item); setShowRejectBox(false); setRejectReason(item.rejection_reason || ""); setModalError(""); };

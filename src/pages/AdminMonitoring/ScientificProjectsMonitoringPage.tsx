@@ -44,7 +44,7 @@ export default function ScientificProjectsMonitoringPage() {
     setError("");
 
     try {
-      const res = await scientificProjectService.getForMonitoring(filterStatus || undefined);
+      const res = await scientificProjectService.getForMonitoring(filterStatus || undefined, user?.id);
       const data = Array.isArray(res?.data) ? res.data : [];
       setItems(data);
     } catch (err: any) {
@@ -70,7 +70,7 @@ export default function ScientificProjectsMonitoringPage() {
     setProcessingId(item.id);
     setError("");
     try {
-      await scientificProjectService.approve(item.id);
+      await scientificProjectService.approve(item.id, user.id);
       await load();
       if (selectedItem?.id === item.id) {
         setSelectedItem(null);
@@ -98,7 +98,7 @@ export default function ScientificProjectsMonitoringPage() {
     setError("");
     setModalError("");
     try {
-      await scientificProjectService.reject(item.id, reason.trim());
+      await scientificProjectService.reject(item.id, user.id, reason.trim());
       await load();
       if (selectedItem?.id === item.id) {
         setSelectedItem(null);

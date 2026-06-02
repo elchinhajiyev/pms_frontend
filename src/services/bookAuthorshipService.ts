@@ -126,23 +126,27 @@ const bookAuthorshipService = {
     return { ...response.data, data } as { data: BookAuthorshipItem }
   },
 
-  async getForMonitoring(status?: string) {
+  async getForMonitoring(status?: string, userId?: number) {
     const params = new URLSearchParams()
     if (status) params.set('status', status)
+    if (Number.isFinite(userId)) params.set('user_id', String(userId))
     const query = params.toString()
     const response = await api.get(`/evaluation/book-authorship/monitoring${query ? `?${query}` : ''}`)
     const data = normalizeItems(response.data?.data)
     return { ...response.data, data } as { data: BookAuthorshipItem[] }
   },
 
-  async approve(id: number) {
-    const response = await api.put(`/evaluation/book-authorship/${id}/approve`)
+  async approve(id: number, approvedBy: number) {
+    const response = await api.put(`/evaluation/book-authorship/${id}/approve`, {
+      approved_by: approvedBy
+    })
     const data = normalizeItem(response.data?.data)
     return { ...response.data, data } as { data: BookAuthorshipItem }
   },
 
-  async reject(id: number, rejectionReason: string) {
+  async reject(id: number, approvedBy: number, rejectionReason: string) {
     const response = await api.put(`/evaluation/book-authorship/${id}/reject`, {
+      approved_by: approvedBy,
       rejection_reason: rejectionReason
     })
     const data = normalizeItem(response.data?.data)

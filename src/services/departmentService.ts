@@ -111,8 +111,8 @@ const departmentService = {
     return response.data
   },
 
-  async getMonitoringAccess() {
-    const response = await api.get('/evaluation/departments/monitoring-access')
+  async getMonitoringAccess(userId: number) {
+    const response = await api.get(`/evaluation/departments/monitoring-access/${userId}`)
     return response.data
   }
 }

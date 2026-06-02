@@ -44,7 +44,7 @@ export default function TextbooksMonitoringPage() {
     setError("");
 
     try {
-      const res = await teachingProgramService.getForMonitoring(filterStatus || undefined, "textbooks");
+      const res = await teachingProgramService.getForMonitoring(filterStatus || undefined, "textbooks", user?.id);
       const data = Array.isArray(res?.data) ? res.data : [];
       setItems(data);
     } catch (err: any) {
@@ -70,7 +70,7 @@ export default function TextbooksMonitoringPage() {
     setProcessingId(item.id);
     setError("");
     try {
-      await teachingProgramService.approve(item.id);
+      await teachingProgramService.approve(item.id, user.id);
       await load();
       if (selectedItem?.id === item.id) {
         setSelectedItem(null);
@@ -98,7 +98,7 @@ export default function TextbooksMonitoringPage() {
     setError("");
     setModalError("");
     try {
-      await teachingProgramService.reject(item.id, reason.trim());
+      await teachingProgramService.reject(item.id, user.id, reason.trim());
       await load();
       if (selectedItem?.id === item.id) {
         setSelectedItem(null);
