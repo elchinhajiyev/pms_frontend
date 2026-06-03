@@ -86,7 +86,8 @@ export default function GeneralReportPage() {
 
   const exportRows = useMemo(
     () =>
-      rows.map((row) => ({
+      rows.map((row, index) => ({
+        "№": index + 1,
         "Şəxsin adı soyadı ata adı": row.full_name || "",
         "Bağlı olduğu kafedra": row.department_name || "",
         "Sorğu qiymətləndirməsindəki ümumi orta balı": formatScore(row.survey_average_score),
@@ -203,20 +204,22 @@ export default function GeneralReportPage() {
             <div className="overflow-x-auto xl:overflow-visible">
               <table className="min-w-[1180px] table-fixed text-xs xl:w-full xl:min-w-0">
                 <colgroup>
-                  <col className="w-[190px] xl:w-[15%]" />
-                  <col className="w-[170px] xl:w-[13%]" />
-                  <col className="w-[110px] xl:w-[10%]" />
-                  <col className="w-[100px] xl:w-[9%]" />
-                  <col className="w-[100px] xl:w-[9%]" />
+                  <col className="w-[52px] xl:w-[4%]" />
+                  <col className="w-[190px] xl:w-[14%]" />
+                  <col className="w-[170px] xl:w-[12%]" />
+                  <col className="w-[110px] xl:w-[9%]" />
+                  <col className="w-[100px] xl:w-[8%]" />
+                  <col className="w-[100px] xl:w-[8%]" />
                   <col className="w-[120px] xl:w-[11%]" />
                   <col className="w-[120px] xl:w-[11%]" />
                   <col className="w-[130px] xl:w-[12%]" />
                   <col className="w-[95px] xl:w-[5%]" />
-                  <col className="w-[95px] xl:w-[5%]" />
+                  <col className="w-[95px] xl:w-[6%]" />
                 </colgroup>
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-25 text-left text-xs font-normal text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                    <th className="sticky left-0 z-20 border-r border-gray-200 bg-gray-25 px-2 py-2 font-normal dark:border-gray-700 dark:bg-gray-800 xl:static">Şəxsin adı soyadı ata adı</th>
+                    <th className="sticky left-0 z-30 border-r border-gray-200 bg-gray-25 px-2 py-2 text-center font-normal dark:border-gray-700 dark:bg-gray-800 xl:static">№</th>
+                    <th className="sticky left-[52px] z-20 border-r border-gray-200 bg-gray-25 px-2 py-2 font-normal dark:border-gray-700 dark:bg-gray-800 xl:static">Şəxsin adı soyadı ata adı</th>
                     <th className="border-r border-gray-200 px-2 py-2 font-normal dark:border-gray-700">Bağlı olduğu kafedra</th>
                     <th className="border-r border-gray-200 px-2 py-2 text-center font-normal dark:border-gray-700">Sorğu orta balı</th>
                     <th className="border-r border-gray-200 px-2 py-2 text-center font-normal dark:border-gray-700">Mənimsəmə faizi</th>
@@ -231,23 +234,26 @@ export default function GeneralReportPage() {
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                   {loadingReport ? (
                     <tr>
-                      <td colSpan={10} className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
+                      <td colSpan={11} className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
                         Yüklənir...
                       </td>
                     </tr>
                   ) : rows.length === 0 ? (
                     <tr>
-                      <td colSpan={10} className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
+                      <td colSpan={11} className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
                         Məlumat tapılmadı.
                       </td>
                     </tr>
                   ) : (
-                    rows.map((row) => (
+                    rows.map((row, index) => (
                       <tr
                         key={row.user_id}
                         className="bg-white transition-colors hover:bg-gray-25 dark:bg-gray-900 dark:hover:bg-gray-800/70"
                       >
-                        <td className="sticky left-0 z-10 border-r border-gray-100 bg-white px-2 py-1.5 text-gray-800 dark:border-gray-800 dark:bg-gray-900 dark:text-white xl:static">
+                        <td className="sticky left-0 z-20 border-r border-gray-100 bg-white px-2 py-1.5 text-center text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 xl:static">
+                          {index + 1}
+                        </td>
+                        <td className="sticky left-[52px] z-10 border-r border-gray-100 bg-white px-2 py-1.5 text-gray-800 dark:border-gray-800 dark:bg-gray-900 dark:text-white xl:static">
                           <span className="block truncate">{row.full_name || "—"}</span>
                         </td>
                         <td className="border-r border-gray-100 px-2 py-1.5 text-gray-600 dark:border-gray-800 dark:text-gray-400">
