@@ -33,6 +33,7 @@ import SurveysPage from "./pages/Surveys/SurveysPage";
 import SurveyQuestionBanksPage from "./pages/SurveyQuestions/SurveyQuestionBanksPage";
 import TeachingSubjectsList from "./pages/TeachingSubjects/TeachingSubjectsList";
 import DepartmentsList from "./pages/Departments/DepartmentsList";
+import CommissionsList from "./pages/Commissions/CommissionsList";
 import FacultiesList from "./pages/Faculties/FacultiesList";
 import SpecialtiesList from "./pages/Specialties/SpecialtiesList";
 import StudentGroupsList from "./pages/StudentGroups/StudentGroupsList";
@@ -123,6 +124,7 @@ export default function App() {
               <Route path="/teacher-surveys/results" element={<TeacherSurveyResults />} />
               <Route path="/teaching-subjects" element={<TeachingSubjectsList />} />
               <Route path="/departments" element={<DepartmentsList />} />
+              <Route path="/commissions" element={<CommissionsList />} />
               <Route path="/faculties" element={<FacultiesList />} />
               <Route path="/specialties" element={<SpecialtiesList />} />
               <Route path="/student-groups" element={<StudentGroupsList />} />

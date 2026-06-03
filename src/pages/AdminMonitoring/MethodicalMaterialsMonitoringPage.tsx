@@ -11,7 +11,8 @@ const statusLabel = (status?: string) => status === "approved" ? "Təsdiqlənib"
 
 export default function MethodicalMaterialsMonitoringPage() {
   const { user } = useAuth();
-  const canModerate = String(user?.role_code || "").toUpperCase() !== "ADMIN";
+  const normalizedRoleCode = String(user?.role_code || "").toUpperCase().replace(/[^A-Z]/g, "");
+  const canModerate = normalizedRoleCode !== "ADMIN" && normalizedRoleCode !== "HEADOFDEPARTMENT" && !user?.is_department_head;
   const [items, setItems] = useState<TeachingProgramItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");

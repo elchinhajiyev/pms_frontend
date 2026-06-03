@@ -21,6 +21,7 @@ export default function CreateTeachingProgramPage() {
   const [semester, setSemester] = useState<"YAZ" | "YAY" | "PAYIZ">("YAZ");
   const [academicYear, setAcademicYear] = useState(`${new Date().getFullYear()}-${new Date().getFullYear() + 1}`);
   const [categoryId, setCategoryId] = useState("");
+  const [programCategory, setProgramCategory] = useState("general");
   const [summary, setSummary] = useState("");
   const [link, setLink] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -138,6 +139,7 @@ export default function CreateTeachingProgramPage() {
         semester,
         academic_year: academicYear.trim(),
         category_parameter_id: Number(categoryId),
+        category: programCategory.trim() || "general",
         summary: summary.trim() || undefined,
         link: link.trim() || undefined,
         created_by: user.id,
@@ -234,6 +236,20 @@ export default function CreateTeachingProgramPage() {
                     {category.name}
                   </option>
                 ))}
+              </select>
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Tədris Programı Tipi *</label>
+              <select
+                value={programCategory}
+                onChange={(e) => setProgramCategory(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+              >
+                <option value="general">Ümumi</option>
+                <option value="methodical_materials">Metodiki Vəsaitlər</option>
+                <option value="course_materials">Kurs Materialları</option>
+                <option value="textbooks">Dərsliklər</option>
               </select>
             </div>
 

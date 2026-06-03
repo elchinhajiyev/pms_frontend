@@ -21,7 +21,8 @@ const statusLabel = (status?: string) => {
 
 export default function ScientificReportsMonitoringPage() {
   const { user } = useAuth();
-  const canModerate = String(user?.role_code || "").toUpperCase() !== "ADMIN";
+  const normalizedRoleCode = String(user?.role_code || "").toUpperCase().replace(/[^A-Z]/g, "");
+  const canModerate = normalizedRoleCode !== "ADMIN" && normalizedRoleCode !== "HEADOFDEPARTMENT" && !user?.is_department_head;
 
   const [items, setItems] = useState<ScientificReportItem[]>([]);
   const [loading, setLoading] = useState(true);

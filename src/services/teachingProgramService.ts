@@ -8,6 +8,7 @@ export interface TeachingProgramItem {
   academic_year: string
   category_parameter_id?: number
   category_name?: string
+  category?: string
   summary?: string
   link?: string
   file_path?: string
@@ -36,6 +37,7 @@ export interface CreateTeachingProgramPayload {
   semester: string
   academic_year: string
   category_parameter_id?: number
+  category?: string
   summary?: string
   link?: string
   created_by: number
@@ -48,6 +50,7 @@ export interface UpdateTeachingProgramPayload {
   semester: string
   academic_year: string
   category_parameter_id?: number
+  category?: string
   summary?: string
   link?: string
   created_by: number

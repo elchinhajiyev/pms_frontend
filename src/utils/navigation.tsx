@@ -70,6 +70,7 @@ export const general: NavItem[] = [
     icon: <GridIcon />,
     subItems: [
       { name: "Departament", path: "/departments", pro: false },
+      { name: "Komissiya", path: "/commissions", pro: false },
        { name: "Fakültə", path: "/faculties", pro: false },
       { name: "İxtisas", path: "/specialties", pro: false },
       { name: "Tədris edilən fənlər", path: "/teaching-subjects", pro: false },

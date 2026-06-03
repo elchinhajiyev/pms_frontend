@@ -33,6 +33,7 @@ export interface User {
   access_role_id?: number
   role_name?: string
   role_code?: string
+  is_department_head?: boolean
   student_group_id?: number
   specialty_id?: number
 }
