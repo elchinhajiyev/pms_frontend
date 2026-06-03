@@ -200,20 +200,32 @@ export default function GeneralReportPage() {
           </div>
         ) : (
           <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-theme-xs dark:border-gray-700 dark:bg-gray-900">
-            <div className="overflow-x-auto">
-              <table className="min-w-[1500px] table-auto text-sm">
+            <div className="overflow-x-auto xl:overflow-visible">
+              <table className="min-w-[1180px] table-fixed text-xs xl:w-full xl:min-w-0">
+                <colgroup>
+                  <col className="w-[190px] xl:w-[15%]" />
+                  <col className="w-[170px] xl:w-[13%]" />
+                  <col className="w-[110px] xl:w-[10%]" />
+                  <col className="w-[100px] xl:w-[9%]" />
+                  <col className="w-[100px] xl:w-[9%]" />
+                  <col className="w-[120px] xl:w-[11%]" />
+                  <col className="w-[120px] xl:w-[11%]" />
+                  <col className="w-[130px] xl:w-[12%]" />
+                  <col className="w-[95px] xl:w-[5%]" />
+                  <col className="w-[95px] xl:w-[5%]" />
+                </colgroup>
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-25 text-left text-xs font-normal text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                    <th className="border-r border-gray-200 px-4 py-2 font-normal dark:border-gray-700">Şəxsin adı soyadı ata adı</th>
-                    <th className="border-r border-gray-200 px-4 py-2 font-normal dark:border-gray-700">Bağlı olduğu kafedra</th>
-                    <th className="border-r border-gray-200 px-4 py-2 text-center font-normal dark:border-gray-700">Sorğu orta balı</th>
-                    <th className="border-r border-gray-200 px-4 py-2 text-center font-normal dark:border-gray-700">Mənimsəmə faizi</th>
-                    <th className="border-r border-gray-200 px-4 py-2 text-center font-normal dark:border-gray-700">Keyfiyyət faizi</th>
-                    <th className="border-r border-gray-200 px-4 py-2 text-center font-normal dark:border-gray-700">Tapşırıq üzrə fəaliyyət</th>
-                    <th className="border-r border-gray-200 px-4 py-2 text-center font-normal dark:border-gray-700">Elmi fəaliyyətlər</th>
-                    <th className="border-r border-gray-200 px-4 py-2 text-center font-normal dark:border-gray-700">Tədris metodiki vəsaitlər</th>
-                    <th className="border-r border-gray-200 px-4 py-2 text-center font-normal dark:border-gray-700">Punktuallıq</th>
-                    <th className="px-4 py-2 text-center font-normal">Cəmi bal</th>
+                    <th className="sticky left-0 z-20 border-r border-gray-200 bg-gray-25 px-2 py-2 font-normal dark:border-gray-700 dark:bg-gray-800 xl:static">Şəxsin adı soyadı ata adı</th>
+                    <th className="border-r border-gray-200 px-2 py-2 font-normal dark:border-gray-700">Bağlı olduğu kafedra</th>
+                    <th className="border-r border-gray-200 px-2 py-2 text-center font-normal dark:border-gray-700">Sorğu orta balı</th>
+                    <th className="border-r border-gray-200 px-2 py-2 text-center font-normal dark:border-gray-700">Mənimsəmə faizi</th>
+                    <th className="border-r border-gray-200 px-2 py-2 text-center font-normal dark:border-gray-700">Keyfiyyət faizi</th>
+                    <th className="border-r border-gray-200 px-2 py-2 text-center font-normal dark:border-gray-700">Tapşırıq üzrə fəaliyyət</th>
+                    <th className="border-r border-gray-200 px-2 py-2 text-center font-normal dark:border-gray-700">Elmi fəaliyyətlər</th>
+                    <th className="border-r border-gray-200 px-2 py-2 text-center font-normal dark:border-gray-700">Tədris metodiki vəsaitlər</th>
+                    <th className="border-r border-gray-200 px-2 py-2 text-center font-normal dark:border-gray-700">Punktuallıq</th>
+                    <th className="px-2 py-2 text-center font-normal">Cəmi bal</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -235,28 +247,28 @@ export default function GeneralReportPage() {
                         key={row.user_id}
                         className="bg-white transition-colors hover:bg-gray-25 dark:bg-gray-900 dark:hover:bg-gray-800/70"
                       >
-                        <td className="border-r border-gray-100 px-4 py-1.5 text-gray-800 dark:border-gray-800 dark:text-white">
-                          {row.full_name || "—"}
+                        <td className="sticky left-0 z-10 border-r border-gray-100 bg-white px-2 py-1.5 text-gray-800 dark:border-gray-800 dark:bg-gray-900 dark:text-white xl:static">
+                          <span className="block truncate">{row.full_name || "—"}</span>
                         </td>
-                        <td className="border-r border-gray-100 px-4 py-1.5 text-gray-600 dark:border-gray-800 dark:text-gray-400">
-                          {row.department_name || "—"}
+                        <td className="border-r border-gray-100 px-2 py-1.5 text-gray-600 dark:border-gray-800 dark:text-gray-400">
+                          <span className="block truncate">{row.department_name || "—"}</span>
                         </td>
-                        <td className="whitespace-nowrap border-r border-gray-100 px-4 py-1.5 text-center text-gray-600 dark:border-gray-800 dark:text-gray-400">
+                        <td className="whitespace-nowrap border-r border-gray-100 px-2 py-1.5 text-center text-gray-600 dark:border-gray-800 dark:text-gray-400">
                           {formatScore(row.survey_average_score) || "—"}
                         </td>
-                        <td className="whitespace-nowrap border-r border-gray-100 px-4 py-1.5 text-center text-gray-600 dark:border-gray-800 dark:text-gray-400" />
-                        <td className="whitespace-nowrap border-r border-gray-100 px-4 py-1.5 text-center text-gray-600 dark:border-gray-800 dark:text-gray-400" />
-                        <td className="whitespace-nowrap border-r border-gray-100 px-4 py-1.5 text-center text-gray-600 dark:border-gray-800 dark:text-gray-400">
+                        <td className="whitespace-nowrap border-r border-gray-100 px-2 py-1.5 text-center text-gray-600 dark:border-gray-800 dark:text-gray-400" />
+                        <td className="whitespace-nowrap border-r border-gray-100 px-2 py-1.5 text-center text-gray-600 dark:border-gray-800 dark:text-gray-400" />
+                        <td className="whitespace-nowrap border-r border-gray-100 px-2 py-1.5 text-center text-gray-600 dark:border-gray-800 dark:text-gray-400">
                           {formatScore(row.task_activity_average) || "—"}
                         </td>
-                        <td className="whitespace-nowrap border-r border-gray-100 px-4 py-1.5 text-center text-gray-600 dark:border-gray-800 dark:text-gray-400">
+                        <td className="whitespace-nowrap border-r border-gray-100 px-2 py-1.5 text-center text-gray-600 dark:border-gray-800 dark:text-gray-400">
                           {formatScore(row.scientific_activity_score) || "—"}
                         </td>
-                        <td className="whitespace-nowrap border-r border-gray-100 px-4 py-1.5 text-center text-gray-600 dark:border-gray-800 dark:text-gray-400">
+                        <td className="whitespace-nowrap border-r border-gray-100 px-2 py-1.5 text-center text-gray-600 dark:border-gray-800 dark:text-gray-400">
                           {formatScore(row.teaching_material_score) || "—"}
                         </td>
-                        <td className="whitespace-nowrap border-r border-gray-100 px-4 py-1.5 text-center text-gray-600 dark:border-gray-800 dark:text-gray-400" />
-                        <td className="whitespace-nowrap px-4 py-1.5 text-center text-gray-800 dark:text-white">
+                        <td className="whitespace-nowrap border-r border-gray-100 px-2 py-1.5 text-center text-gray-600 dark:border-gray-800 dark:text-gray-400" />
+                        <td className="whitespace-nowrap px-2 py-1.5 text-center text-gray-800 dark:text-white">
                           {formatScore(row.total_score) || "0.00"}
                         </td>
                       </tr>
