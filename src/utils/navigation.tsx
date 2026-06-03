@@ -178,3 +178,13 @@ export const monitoring: NavItem[] = [
 //     ],
 //   },
 ];
+
+export const reports: NavItem[] = [
+  {
+    icon: <MdOutlineAssessment />,
+    name: "Hesabatlar",
+    subItems: [
+      { name: "Ümumi hesabat", path: "/reports/general", pro: false },
+    ],
+  },
+];

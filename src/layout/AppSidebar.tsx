@@ -4,7 +4,7 @@ import { Link, useLocation } from "react-router";
 import { useSidebar } from "../context/SidebarContext";
 import { useAuth } from "../context/AuthContext";
 import departmentService from "../services/departmentService";
-import { general, task, monitoring, NavItem, categoryItems } from "../utils/navigation";
+import { general, task, monitoring, reports, NavItem, categoryItems } from "../utils/navigation";
 import {
   ChevronDownIcon,
   HorizontaLDots,
@@ -23,7 +23,7 @@ const AppSidebar: React.FC = () => {
   const location = useLocation();
 
   const [openSubmenu, setOpenSubmenu] = useState<{
-    type: "general" | "task" | "monitoring";
+    type: "general" | "task" | "monitoring" | "reports";
     index: number;
   } | null>(null);
   const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>(
@@ -38,16 +38,23 @@ const AppSidebar: React.FC = () => {
   );
 
   useEffect(() => {
-    let matchedSubmenu: { type: "general" | "task" | "monitoring"; index: number } | null = null;
+    let matchedSubmenu: { type: "general" | "task" | "monitoring" | "reports"; index: number } | null = null;
 
-    ["general", "task", "monitoring"].forEach((menuType) => {
-      const items = menuType === "general" ? general : menuType === "task" ? task : monitoring;
+    ["general", "task", "monitoring", "reports"].forEach((menuType) => {
+      const items =
+        menuType === "general"
+          ? general
+          : menuType === "task"
+            ? task
+            : menuType === "monitoring"
+              ? monitoring
+              : reports;
       items.forEach((nav, index) => {
         if (nav.subItems) {
           nav.subItems.forEach((subItem) => {
             if (isActive(subItem.path)) {
               matchedSubmenu = {
-                type: menuType as "general" | "task" | "monitoring",
+                type: menuType as "general" | "task" | "monitoring" | "reports",
                 index,
               };
             }
@@ -104,7 +111,7 @@ const AppSidebar: React.FC = () => {
     };
   }, [user?.id]);
 
-  const handleSubmenuToggle = (index: number, menuType: "general" | "task" | "monitoring") => {
+  const handleSubmenuToggle = (index: number, menuType: "general" | "task" | "monitoring" | "reports") => {
     setOpenSubmenu((prevOpenSubmenu) => {
       if (
         prevOpenSubmenu &&
@@ -119,7 +126,7 @@ const AppSidebar: React.FC = () => {
 
   const renderMenuItems = (
     items: NavItem[],
-    menuType: "general" | "task" | "monitoring",
+    menuType: "general" | "task" | "monitoring" | "reports",
     indexOffset = 0
   ) => (
     <ul className="flex flex-col gap-4">
@@ -411,6 +418,24 @@ const AppSidebar: React.FC = () => {
                   )}
                 </h2>
                 {renderMenuItems(monitoring, "monitoring")}
+              </div>
+            )}
+            {isAdmin && (
+              <div className="">
+                <h2
+                  className={`mb-4 text-xs  flex leading-[20px] text-gray-400 ${
+                    !isExpanded && !isHovered
+                      ? "lg:justify-center"
+                      : "justify-start"
+                  }`}
+                >
+                  {isExpanded || isHovered || isMobileOpen ? (
+                    "Hesabatlar"
+                  ) : (
+                    <HorizontaLDots />
+                  )}
+                </h2>
+                {renderMenuItems(reports, "reports")}
               </div>
             )}
           </div>
