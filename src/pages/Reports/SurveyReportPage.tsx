@@ -33,6 +33,26 @@ const shortText = (value: string) => {
   return `${normalized.slice(0, 13)}…`;
 };
 
+const wrapChartLabel = (value: string) => {
+  const words = String(value || "").trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "";
+
+  const lines: string[] = [""];
+  for (const word of words) {
+    const currentIndex = lines.length - 1;
+    const nextLine = [lines[currentIndex], word].filter(Boolean).join(" ");
+    if (nextLine.length <= 34 || lines[currentIndex].length === 0) {
+      lines[currentIndex] = nextLine;
+    } else if (lines.length < 2) {
+      lines.push(word);
+    } else {
+      lines[currentIndex] = `${lines[currentIndex]} ${word}`;
+    }
+  }
+
+  return lines;
+};
+
 export default function SurveyReportPage() {
   const [academicYears, setAcademicYears] = useState<HelperToolOption[]>([]);
   const [semesters, setSemesters] = useState<HelperToolOption[]>([]);
@@ -224,9 +244,18 @@ export default function SurveyReportPage() {
           borderRadiusApplication: "end",
         },
       },
-      dataLabels: { enabled: false },
+      dataLabels: {
+        enabled: true,
+        formatter: (value) => Number(value).toFixed(2),
+        offsetX: 8,
+        style: {
+          colors: ["#374151"],
+          fontSize: "11px",
+          fontWeight: 400,
+        },
+      },
       xaxis: {
-        categories: chartData.map((item) => item.text),
+        categories: chartData.map((item) => wrapChartLabel(item.text)),
         min: 0,
         max: 5,
         tickAmount: 5,
@@ -235,7 +264,7 @@ export default function SurveyReportPage() {
       },
       yaxis: {
         labels: {
-          maxWidth: 220,
+          maxWidth: 360,
           style: { fontSize: "11px" },
         },
       },
