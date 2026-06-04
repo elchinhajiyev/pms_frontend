@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import Chart from "react-apexcharts";
 import { ApexOptions } from "apexcharts";
@@ -51,6 +51,7 @@ export default function ActivityReportPage() {
     key: string;
     direction: "asc" | "desc";
   } | null>(null);
+  const chartRef = useRef<Chart | null>(null);
 
   useEffect(() => {
     const loadOptions = async () => {
@@ -148,6 +149,25 @@ export default function ActivityReportPage() {
     if (selectedUserIds.size === 0) return rows;
     return rows.filter((row) => selectedUserIds.has(Number(row.user_id)));
   }, [rows, selectedUserIds]);
+
+  const selectedNames = useMemo(
+    () =>
+      rows
+        .filter((row) => selectedUserIds.has(Number(row.user_id)))
+        .map((row) => row.full_name)
+        .filter(Boolean),
+    [rows, selectedUserIds]
+  );
+
+  const chartTitle = useMemo(() => {
+    if (selectedNames.length === 1) {
+      return `${selectedNames[0]} üçün fəaliyyətlər üzrə orta ballar`;
+    }
+    if (selectedNames.length > 1) {
+      return `${selectedNames.join(", ")} üçün fəaliyyətlər üzrə orta ballar`;
+    }
+    return "Fəaliyyətlər üzrə orta ballar";
+  }, [selectedNames]);
 
   const chartData = useMemo(
     () =>
@@ -283,6 +303,19 @@ export default function ActivityReportPage() {
     XLSX.writeFile(workbook, `fealiyyetler-hesabati${suffix ? `-${suffix}` : ""}.xlsx`);
   };
 
+  const handleDownloadChart = async () => {
+    const chart = (chartRef.current as unknown as {
+      chart?: { dataURI: () => Promise<{ imgURI: string }> };
+    } | null)?.chart;
+    if (!chart) return;
+
+    const dataUri = await chart.dataURI();
+    const link = document.createElement("a");
+    link.href = dataUri.imgURI;
+    link.download = "fealiyyetler-diagrami.png";
+    link.click();
+  };
+
   const tableActivities = activities;
   const tableMinWidth = Math.max(796 + tableActivities.length * 92, 1020);
 
@@ -390,9 +423,9 @@ export default function ActivityReportPage() {
                 style={{ minWidth: tableMinWidth, width: "100%" }}
               >
                 <colgroup>
+                  <col className="w-[36px]" />
                   <col className="w-[52px]" />
                   <col className="w-[190px]" />
-                  <col className="w-[36px]" />
                   <col className="w-[170px]" />
                   {tableActivities.map((activity) => (
                     <col key={activity.key} className="w-[92px]" />
@@ -401,9 +434,9 @@ export default function ActivityReportPage() {
                 </colgroup>
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-25 text-left text-xs font-normal text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                    <th className="sticky left-0 z-30 border-r border-gray-200 bg-gray-25 px-2 py-2 text-center font-normal dark:border-gray-700 dark:bg-gray-800">№</th>
-                    <th className="sticky left-[52px] z-20 border-r border-gray-200 bg-gray-25 px-2 py-2 font-normal dark:border-gray-700 dark:bg-gray-800">Şəxsin adı soyadı</th>
-                    <th className="border-r border-gray-200 px-2 py-2 text-center font-normal dark:border-gray-700"></th>
+                    <th className="sticky left-0 z-30 border-r border-gray-200 bg-gray-25 px-2 py-2 text-center font-normal dark:border-gray-700 dark:bg-gray-800"></th>
+                    <th className="sticky left-[36px] z-30 border-r border-gray-200 bg-gray-25 px-2 py-2 text-center font-normal dark:border-gray-700 dark:bg-gray-800">№</th>
+                    <th className="sticky left-[88px] z-20 border-r border-gray-200 bg-gray-25 px-2 py-2 font-normal dark:border-gray-700 dark:bg-gray-800">Şəxsin adı soyadı</th>
                     <th className="border-r border-gray-200 px-2 py-2 font-normal dark:border-gray-700">Bağlı olduğu kafedra</th>
                     {tableActivities.map((activity) => (
                       <th
@@ -465,13 +498,7 @@ export default function ActivityReportPage() {
                         key={row.user_id}
                         className="bg-white transition-colors hover:bg-gray-25 dark:bg-gray-900 dark:hover:bg-gray-800/70"
                       >
-                        <td className="sticky left-0 z-20 border-r border-gray-100 bg-white px-2 py-1.5 text-center text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
-                          {index + 1}
-                        </td>
-                        <td className="sticky left-[52px] z-10 border-r border-gray-100 bg-white px-2 py-1.5 text-gray-800 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
-                          <span className="block truncate">{row.full_name || "—"}</span>
-                        </td>
-                        <td className="border-r border-gray-100 px-2 py-1.5 text-center dark:border-gray-800">
+                        <td className="sticky left-0 z-30 border-r border-gray-100 bg-white px-2 py-1.5 text-center dark:border-gray-800 dark:bg-gray-900">
                           <input
                             type="checkbox"
                             checked={selectedUserIds.has(Number(row.user_id))}
@@ -479,6 +506,12 @@ export default function ActivityReportPage() {
                             className="h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500"
                             aria-label={`${row.full_name || "Şəxs"} diagram üçün seç`}
                           />
+                        </td>
+                        <td className="sticky left-[36px] z-20 border-r border-gray-100 bg-white px-2 py-1.5 text-center text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
+                          {index + 1}
+                        </td>
+                        <td className="sticky left-[88px] z-10 border-r border-gray-100 bg-white px-2 py-1.5 text-gray-800 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
+                          <span className="block truncate">{row.full_name || "—"}</span>
                         </td>
                         <td className="border-r border-gray-100 px-2 py-1.5 text-gray-600 dark:border-gray-800 dark:text-gray-400">
                           <span className="block truncate">{row.department_name || "—"}</span>
@@ -506,14 +539,19 @@ export default function ActivityReportPage() {
 
       <Modal isOpen={chartOpen} onClose={() => setChartOpen(false)} className="m-4 w-full max-w-5xl">
         <div className="p-5 pr-14 sm:p-6 sm:pr-16">
-          <h3 className="mb-4 text-base font-medium text-gray-900 dark:text-white">
-            Fəaliyyətlər üzrə orta ballar
-          </h3>
-          {selectedUserIds.size > 0 && (
-            <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
-              Diagram {selectedUserIds.size} seçilmiş şəxs üzrə göstərilir.
-            </p>
-          )}
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h3 className="max-w-[720px] text-base font-medium text-gray-900 dark:text-white">
+              {chartTitle}
+            </h3>
+            <button
+              type="button"
+              onClick={handleDownloadChart}
+              disabled={chartData.length === 0}
+              className="h-9 rounded-md border border-gray-300 bg-white px-3 text-xs font-normal text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+            >
+              Şəkil kimi yadda saxla
+            </button>
+          </div>
           {chartData.length === 0 ? (
             <p className="py-10 text-center text-sm text-gray-500 dark:text-gray-400">
               Diagram üçün məlumat tapılmadı.
@@ -522,6 +560,7 @@ export default function ActivityReportPage() {
             <div className="overflow-x-auto">
               <div style={{ minWidth: 720 }}>
                 <Chart
+                  ref={chartRef}
                   options={chartOptions}
                   series={chartSeries}
                   type="bar"
