@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import * as XLSX from "xlsx";
 import Chart from "react-apexcharts";
-import { ApexOptions } from "apexcharts";
+import ApexCharts, { ApexOptions } from "apexcharts";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
 import { Modal } from "../../components/ui/modal";
@@ -51,7 +51,6 @@ export default function ActivityReportPage() {
     key: string;
     direction: "asc" | "desc";
   } | null>(null);
-  const chartRef = useRef<Chart | null>(null);
 
   useEffect(() => {
     const loadOptions = async () => {
@@ -196,6 +195,7 @@ export default function ActivityReportPage() {
     () => ({
       colors: ["#10b981"],
       chart: {
+        id: "activity-report-chart",
         fontFamily: "Outfit, sans-serif",
         type: "bar",
         toolbar: { show: false },
@@ -304,12 +304,9 @@ export default function ActivityReportPage() {
   };
 
   const handleDownloadChart = async () => {
-    const chart = (chartRef.current as unknown as {
-      chart?: { dataURI: () => Promise<{ imgURI: string }> };
-    } | null)?.chart;
-    if (!chart) return;
+    const dataUri = await ApexCharts.exec("activity-report-chart", "dataURI");
+    if (!dataUri?.imgURI) return;
 
-    const dataUri = await chart.dataURI();
     const link = document.createElement("a");
     link.href = dataUri.imgURI;
     link.download = "fealiyyetler-diagrami.png";
@@ -560,7 +557,7 @@ export default function ActivityReportPage() {
             <div className="overflow-x-auto">
               <div style={{ minWidth: 720 }}>
                 <Chart
-                  ref={chartRef}
+                  key={`${chartOpen}-${chartData.map((item) => `${item.key}:${item.average}`).join("|")}`}
                   options={chartOptions}
                   series={chartSeries}
                   type="bar"
