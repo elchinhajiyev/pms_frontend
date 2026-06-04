@@ -283,7 +283,8 @@ export default function ActivityReportPage() {
     XLSX.writeFile(workbook, `fealiyyetler-hesabati${suffix ? `-${suffix}` : ""}.xlsx`);
   };
 
-  const tableMinWidth = Math.max(760 + activities.length * 92, 980);
+  const tableActivities = activities;
+  const tableMinWidth = Math.max(796 + tableActivities.length * 92, 1020);
 
   return (
     <>
@@ -391,8 +392,9 @@ export default function ActivityReportPage() {
                 <colgroup>
                   <col className="w-[52px]" />
                   <col className="w-[190px]" />
+                  <col className="w-[36px]" />
                   <col className="w-[170px]" />
-                  {activities.map((activity) => (
+                  {tableActivities.map((activity) => (
                     <col key={activity.key} className="w-[92px]" />
                   ))}
                   <col className="w-[105px]" />
@@ -401,8 +403,9 @@ export default function ActivityReportPage() {
                   <tr className="border-b border-gray-200 bg-gray-25 text-left text-xs font-normal text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
                     <th className="sticky left-0 z-30 border-r border-gray-200 bg-gray-25 px-2 py-2 text-center font-normal dark:border-gray-700 dark:bg-gray-800">№</th>
                     <th className="sticky left-[52px] z-20 border-r border-gray-200 bg-gray-25 px-2 py-2 font-normal dark:border-gray-700 dark:bg-gray-800">Şəxsin adı soyadı</th>
+                    <th className="border-r border-gray-200 px-2 py-2 text-center font-normal dark:border-gray-700"></th>
                     <th className="border-r border-gray-200 px-2 py-2 font-normal dark:border-gray-700">Bağlı olduğu kafedra</th>
-                    {activities.map((activity) => (
+                    {tableActivities.map((activity) => (
                       <th
                         key={activity.key}
                         title={activity.name}
@@ -441,7 +444,7 @@ export default function ActivityReportPage() {
                   {loadingReport ? (
                     <tr>
                       <td
-                        colSpan={activities.length + 4}
+                        colSpan={tableActivities.length + 5}
                         className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400"
                       >
                         Yüklənir...
@@ -450,7 +453,7 @@ export default function ActivityReportPage() {
                   ) : rows.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={activities.length + 4}
+                        colSpan={tableActivities.length + 5}
                         className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400"
                       >
                         Məlumat tapılmadı.
@@ -466,21 +469,21 @@ export default function ActivityReportPage() {
                           {index + 1}
                         </td>
                         <td className="sticky left-[52px] z-10 border-r border-gray-100 bg-white px-2 py-1.5 text-gray-800 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
-                          <div className="flex min-w-0 items-center gap-2">
-                            <input
-                              type="checkbox"
-                              checked={selectedUserIds.has(Number(row.user_id))}
-                              onChange={() => toggleUserSelection(Number(row.user_id))}
-                              className="h-4 w-4 shrink-0 rounded border-gray-300 text-brand-500 focus:ring-brand-500"
-                              aria-label={`${row.full_name || "Şəxs"} diagram üçün seç`}
-                            />
-                            <span className="block min-w-0 truncate">{row.full_name || "—"}</span>
-                          </div>
+                          <span className="block truncate">{row.full_name || "—"}</span>
+                        </td>
+                        <td className="border-r border-gray-100 px-2 py-1.5 text-center dark:border-gray-800">
+                          <input
+                            type="checkbox"
+                            checked={selectedUserIds.has(Number(row.user_id))}
+                            onChange={() => toggleUserSelection(Number(row.user_id))}
+                            className="h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500"
+                            aria-label={`${row.full_name || "Şəxs"} diagram üçün seç`}
+                          />
                         </td>
                         <td className="border-r border-gray-100 px-2 py-1.5 text-gray-600 dark:border-gray-800 dark:text-gray-400">
                           <span className="block truncate">{row.department_name || "—"}</span>
                         </td>
-                        {activities.map((activity) => (
+                        {tableActivities.map((activity) => (
                           <td
                             key={`${row.user_id}-${activity.key}`}
                             className="whitespace-nowrap border-r border-gray-100 px-2 py-1.5 text-center text-gray-600 dark:border-gray-800 dark:text-gray-400"
