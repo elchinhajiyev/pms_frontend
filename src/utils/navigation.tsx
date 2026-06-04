@@ -186,6 +186,7 @@ export const reports: NavItem[] = [
     subItems: [
       { name: "Ümumi hesabat", path: "/reports/general", pro: false },
       { name: "Fəaliyyətlər hesabatı", path: "/reports/activities", pro: false },
+      { name: "Sorğu hesabatı", path: "/reports/surveys", pro: false },
     ],
   },
 ];

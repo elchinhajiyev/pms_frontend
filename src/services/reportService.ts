@@ -19,6 +19,7 @@ export interface GeneralReportParams {
   semester?: string
   search?: string
   department_id?: number | string
+  survey_id?: number | string
 }
 
 export interface ActivityReportActivity {
@@ -34,6 +35,21 @@ export interface ActivityReportRow {
   total_average_score?: number | string | null
 }
 
+export interface SurveyQuestionReportQuestion {
+  key: string
+  text: string
+  survey_id?: number
+  survey_title?: string
+}
+
+export interface SurveyQuestionReportRow {
+  user_id: number
+  full_name: string
+  department_name?: string
+  question_scores?: Record<string, number | string | null>
+  total_average_score?: number | string | null
+}
+
 const reportService = {
   async getGeneralReport(params: GeneralReportParams) {
     const response = await api.get('/evaluation/reports/general', { params })
@@ -45,6 +61,14 @@ const reportService = {
     return response.data as {
       activities: ActivityReportActivity[]
       data: ActivityReportRow[]
+    }
+  },
+
+  async getSurveyQuestionReport(params: GeneralReportParams) {
+    const response = await api.get('/evaluation/reports/survey-questions', { params })
+    return response.data as {
+      questions: SurveyQuestionReportQuestion[]
+      data: SurveyQuestionReportRow[]
     }
   },
 }
