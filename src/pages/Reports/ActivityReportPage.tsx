@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import * as XLSX from "xlsx";
+import Chart from "react-apexcharts";
+import { ApexOptions } from "apexcharts";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
+import { Modal } from "../../components/ui/modal";
 import departmentService, { Department } from "../../services/departmentService";
 import helperToolService, { HelperToolOption } from "../../services/helperToolService";
 import reportService, {
@@ -42,6 +45,11 @@ export default function ActivityReportPage() {
   const [loadingOptions, setLoadingOptions] = useState(true);
   const [loadingReport, setLoadingReport] = useState(false);
   const [error, setError] = useState("");
+  const [chartOpen, setChartOpen] = useState(false);
+  const [sortConfig, setSortConfig] = useState<{
+    key: string;
+    direction: "asc" | "desc";
+  } | null>(null);
 
   useEffect(() => {
     const loadOptions = async () => {
@@ -97,9 +105,122 @@ export default function ActivityReportPage() {
     return () => window.clearTimeout(timeoutId);
   }, [academicYear, semester, departmentId, search]);
 
+  const sortedRows = useMemo(() => {
+    if (!sortConfig) return rows;
+
+    return [...rows].sort((firstRow, secondRow) => {
+      const firstValue = Number(firstRow.activity_scores?.[sortConfig.key]);
+      const secondValue = Number(secondRow.activity_scores?.[sortConfig.key]);
+      const firstIsNumber = Number.isFinite(firstValue);
+      const secondIsNumber = Number.isFinite(secondValue);
+
+      if (!firstIsNumber && !secondIsNumber) {
+        return String(firstRow.full_name || "").localeCompare(String(secondRow.full_name || ""), "az");
+      }
+      if (!firstIsNumber) return 1;
+      if (!secondIsNumber) return -1;
+
+      return sortConfig.direction === "asc"
+        ? firstValue - secondValue
+        : secondValue - firstValue;
+    });
+  }, [rows, sortConfig]);
+
+  const chartData = useMemo(
+    () =>
+      activities
+        .map((activity) => {
+          const values = rows
+            .map((row) => Number(row.activity_scores?.[activity.key]))
+            .filter(Number.isFinite);
+
+          const average =
+            values.length > 0
+              ? values.reduce((sum, value) => sum + value, 0) / values.length
+              : 0;
+
+          return {
+            key: activity.key,
+            name: activity.name,
+            average: Number(average.toFixed(2)),
+          };
+        })
+        .filter((item) => item.average > 0),
+    [activities, rows]
+  );
+
+  const chartOptions = useMemo<ApexOptions>(
+    () => ({
+      colors: ["#10b981"],
+      chart: {
+        fontFamily: "Outfit, sans-serif",
+        type: "bar",
+        toolbar: { show: false },
+      },
+      plotOptions: {
+        bar: {
+          horizontal: false,
+          columnWidth: "42%",
+          borderRadius: 4,
+          borderRadiusApplication: "end",
+        },
+      },
+      dataLabels: {
+        enabled: false,
+      },
+      xaxis: {
+        categories: chartData.map((item) => shortActivityName(item.name)),
+        labels: {
+          rotate: -35,
+          trim: true,
+          style: { fontSize: "11px" },
+        },
+        tooltip: {
+          enabled: false,
+        },
+      },
+      yaxis: {
+        min: 0,
+        max: 5,
+        tickAmount: 5,
+      },
+      grid: {
+        borderColor: "#e5e7eb",
+        yaxis: { lines: { show: true } },
+      },
+      tooltip: {
+        x: {
+          formatter: (_value, options) => chartData[options.dataPointIndex]?.name || "",
+        },
+        y: {
+          formatter: (value: number) => value.toFixed(2),
+        },
+      },
+    }),
+    [chartData]
+  );
+
+  const chartSeries = useMemo(
+    () => [
+      {
+        name: "Orta bal",
+        data: chartData.map((item) => item.average),
+      },
+    ],
+    [chartData]
+  );
+
+  const toggleSort = (key: string) => {
+    setSortConfig((prev) =>
+      prev?.key === key
+        ? { key, direction: prev.direction === "desc" ? "asc" : "desc" }
+        : { key, direction: "desc" }
+    );
+  };
+
   const exportRows = useMemo(
     () =>
-      rows.map((row, index) => {
+      sortedRows.map((row, index) => {
         const activityColumns = activities.reduce((acc, activity) => {
           acc[activity.name] = formatScore(row.activity_scores?.[activity.key]);
           return acc;
@@ -113,7 +234,7 @@ export default function ActivityReportPage() {
           "Cəmi orta bal": formatScore(row.total_average_score),
         };
       }),
-    [activities, rows]
+    [activities, sortedRows]
   );
 
   const handleExport = () => {
@@ -195,13 +316,22 @@ export default function ActivityReportPage() {
               />
             </div>
 
-            <button
-              onClick={handleExport}
-              disabled={!academicYear || rows.length === 0}
-              className="h-10 rounded-md bg-emerald-600 px-4 text-sm font-normal text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Excelə export
-            </button>
+            <div className="flex flex-col gap-2 sm:flex-row xl:flex-col">
+              <button
+                onClick={handleExport}
+                disabled={!academicYear || rows.length === 0}
+                className="h-10 rounded-md bg-emerald-600 px-4 text-sm font-normal text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Excelə export
+              </button>
+              <button
+                onClick={() => setChartOpen(true)}
+                disabled={!academicYear || chartData.length === 0}
+                className="h-10 rounded-md border border-gray-300 bg-white px-4 text-sm font-normal text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+              >
+                Diagramla göstər
+              </button>
+            </div>
           </div>
         </section>
 
@@ -242,7 +372,18 @@ export default function ActivityReportPage() {
                         title={activity.name}
                         className="border-r border-gray-200 px-2 py-2 text-center font-normal dark:border-gray-700"
                       >
-                        <span className="block truncate">{shortActivityName(activity.name)}</span>
+                        <button
+                          type="button"
+                          onClick={() => toggleSort(activity.key)}
+                          className="mx-auto flex max-w-full items-center justify-center gap-1 text-gray-700 hover:text-brand-600 dark:text-gray-300 dark:hover:text-brand-300"
+                          title={activity.name}
+                        >
+                          <span className="block truncate">{shortActivityName(activity.name)}</span>
+                          <span className="flex shrink-0 flex-col text-[8px] leading-[8px] text-gray-400">
+                            <span className={sortConfig?.key === activity.key && sortConfig.direction === "asc" ? "text-brand-600" : ""}>▲</span>
+                            <span className={sortConfig?.key === activity.key && sortConfig.direction === "desc" ? "text-brand-600" : ""}>▼</span>
+                          </span>
+                        </button>
                       </th>
                     ))}
                     <th className="px-2 py-2 text-center font-normal">Cəmi orta bal</th>
@@ -268,7 +409,7 @@ export default function ActivityReportPage() {
                       </td>
                     </tr>
                   ) : (
-                    rows.map((row, index) => (
+                    sortedRows.map((row, index) => (
                       <tr
                         key={row.user_id}
                         className="bg-white transition-colors hover:bg-gray-25 dark:bg-gray-900 dark:hover:bg-gray-800/70"
@@ -302,6 +443,25 @@ export default function ActivityReportPage() {
           </div>
         )}
       </div>
+
+      <Modal isOpen={chartOpen} onClose={() => setChartOpen(false)} className="m-4 w-full max-w-5xl">
+        <div className="p-5 pr-14 sm:p-6 sm:pr-16">
+          <h3 className="mb-4 text-base font-medium text-gray-900 dark:text-white">
+            Fəaliyyətlər üzrə orta ballar
+          </h3>
+          {chartData.length === 0 ? (
+            <p className="py-10 text-center text-sm text-gray-500 dark:text-gray-400">
+              Diagram üçün məlumat tapılmadı.
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <div style={{ minWidth: Math.max(720, chartData.length * 72) }}>
+                <Chart options={chartOptions} series={chartSeries} type="bar" height={420} />
+              </div>
+            </div>
+          )}
+        </div>
+      </Modal>
     </>
   );
 }
