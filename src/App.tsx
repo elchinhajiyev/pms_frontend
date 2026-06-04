@@ -70,6 +70,7 @@ import CreateMethodicalMaterialPage from "./pages/TeacherCourseProgramsMaterials
 import MethodicalMaterialsMonitoringPage from "./pages/AdminMonitoring/MethodicalMaterialsMonitoringPage";
 import TaskManagerPage from "./pages/Tasks/TaskManagerPage";
 import GeneralReportPage from "./pages/Reports/GeneralReportPage";
+import ActivityReportPage from "./pages/Reports/ActivityReportPage";
 
 function ProtectedRoute() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -163,6 +164,7 @@ export default function App() {
               <Route path="/monitoring/course-materials" element={<CourseMaterialsMonitoringPage />} />
               <Route path="/monitoring/methodical-materials" element={<MethodicalMaterialsMonitoringPage />} />
               <Route path="/reports/general" element={<GeneralReportPage />} />
+              <Route path="/reports/activities" element={<ActivityReportPage />} />
 
               {/* Others Page */}
               <Route path="/profile" element={<UserProfiles />} />
