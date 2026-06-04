@@ -109,8 +109,16 @@ export default function ActivityReportPage() {
     if (!sortConfig) return rows;
 
     return [...rows].sort((firstRow, secondRow) => {
-      const firstValue = Number(firstRow.activity_scores?.[sortConfig.key]);
-      const secondValue = Number(secondRow.activity_scores?.[sortConfig.key]);
+      const firstValue = Number(
+        sortConfig.key === "__total_average__"
+          ? firstRow.total_average_score
+          : firstRow.activity_scores?.[sortConfig.key]
+      );
+      const secondValue = Number(
+        sortConfig.key === "__total_average__"
+          ? secondRow.total_average_score
+          : secondRow.activity_scores?.[sortConfig.key]
+      );
       const firstIsNumber = Number.isFinite(firstValue);
       const secondIsNumber = Number.isFinite(secondValue);
 
@@ -159,8 +167,7 @@ export default function ActivityReportPage() {
       },
       plotOptions: {
         bar: {
-          horizontal: false,
-          columnWidth: "42%",
+          horizontal: true,
           borderRadius: 4,
           borderRadiusApplication: "end",
         },
@@ -169,10 +176,11 @@ export default function ActivityReportPage() {
         enabled: false,
       },
       xaxis: {
-        categories: chartData.map((item) => shortActivityName(item.name)),
+        categories: chartData.map((item) => item.name),
+        min: 0,
+        max: 5,
+        tickAmount: 5,
         labels: {
-          rotate: -35,
-          trim: true,
           style: { fontSize: "11px" },
         },
         tooltip: {
@@ -180,9 +188,10 @@ export default function ActivityReportPage() {
         },
       },
       yaxis: {
-        min: 0,
-        max: 5,
-        tickAmount: 5,
+        labels: {
+          maxWidth: 220,
+          style: { fontSize: "11px" },
+        },
       },
       grid: {
         borderColor: "#e5e7eb",
@@ -231,7 +240,7 @@ export default function ActivityReportPage() {
           "Şəxsin adı soyadı ata adı": row.full_name || "",
           "Bağlı olduğu kafedra": row.department_name || "",
           ...activityColumns,
-          "Cəmi orta bal": formatScore(row.total_average_score),
+          "Ümumi orta bal": formatScore(row.total_average_score),
         };
       }),
     [activities, sortedRows]
@@ -375,7 +384,7 @@ export default function ActivityReportPage() {
                         <button
                           type="button"
                           onClick={() => toggleSort(activity.key)}
-                          className="mx-auto flex max-w-full items-center justify-center gap-1 text-gray-700 hover:text-brand-600 dark:text-gray-300 dark:hover:text-brand-300"
+                          className="flex w-full max-w-full items-center justify-between gap-1 text-left text-gray-700 hover:text-brand-600 dark:text-gray-300 dark:hover:text-brand-300"
                           title={activity.name}
                         >
                           <span className="block truncate">{shortActivityName(activity.name)}</span>
@@ -386,7 +395,19 @@ export default function ActivityReportPage() {
                         </button>
                       </th>
                     ))}
-                    <th className="px-2 py-2 text-center font-normal">Cəmi orta bal</th>
+                    <th className="px-2 py-2 text-center font-normal">
+                      <button
+                        type="button"
+                        onClick={() => toggleSort("__total_average__")}
+                        className="flex w-full max-w-full items-center justify-between gap-1 text-left text-gray-700 hover:text-brand-600 dark:text-gray-300 dark:hover:text-brand-300"
+                      >
+                        <span className="block truncate">Ümumi orta bal</span>
+                        <span className="flex shrink-0 flex-col text-[8px] leading-[8px] text-gray-400">
+                          <span className={sortConfig?.key === "__total_average__" && sortConfig.direction === "asc" ? "text-brand-600" : ""}>▲</span>
+                          <span className={sortConfig?.key === "__total_average__" && sortConfig.direction === "desc" ? "text-brand-600" : ""}>▼</span>
+                        </span>
+                      </button>
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -455,8 +476,13 @@ export default function ActivityReportPage() {
             </p>
           ) : (
             <div className="overflow-x-auto">
-              <div style={{ minWidth: Math.max(720, chartData.length * 72) }}>
-                <Chart options={chartOptions} series={chartSeries} type="bar" height={420} />
+              <div style={{ minWidth: 720 }}>
+                <Chart
+                  options={chartOptions}
+                  series={chartSeries}
+                  type="bar"
+                  height={Math.max(360, chartData.length * 42)}
+                />
               </div>
             </div>
           )}
