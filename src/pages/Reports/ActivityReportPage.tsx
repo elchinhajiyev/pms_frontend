@@ -46,6 +46,7 @@ export default function ActivityReportPage() {
   const [loadingReport, setLoadingReport] = useState(false);
   const [error, setError] = useState("");
   const [chartOpen, setChartOpen] = useState(false);
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<number>>(new Set());
   const [sortConfig, setSortConfig] = useState<{
     key: string;
     direction: "asc" | "desc";
@@ -105,6 +106,15 @@ export default function ActivityReportPage() {
     return () => window.clearTimeout(timeoutId);
   }, [academicYear, semester, departmentId, search]);
 
+  useEffect(() => {
+    setSelectedUserIds((prev) => {
+      if (prev.size === 0) return prev;
+      const existingIds = new Set(rows.map((row) => Number(row.user_id)));
+      const next = new Set([...prev].filter((id) => existingIds.has(id)));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [rows]);
+
   const sortedRows = useMemo(() => {
     if (!sortConfig) return rows;
 
@@ -134,11 +144,16 @@ export default function ActivityReportPage() {
     });
   }, [rows, sortConfig]);
 
+  const chartRows = useMemo(() => {
+    if (selectedUserIds.size === 0) return rows;
+    return rows.filter((row) => selectedUserIds.has(Number(row.user_id)));
+  }, [rows, selectedUserIds]);
+
   const chartData = useMemo(
     () =>
       activities
         .map((activity) => {
-          const values = rows
+          const values = chartRows
             .map((row) => Number(row.activity_scores?.[activity.key]))
             .filter(Number.isFinite);
 
@@ -154,7 +169,7 @@ export default function ActivityReportPage() {
           };
         })
         .filter((item) => item.average > 0),
-    [activities, rows]
+    [activities, chartRows]
   );
 
   const chartOptions = useMemo<ApexOptions>(
@@ -227,6 +242,18 @@ export default function ActivityReportPage() {
     );
   };
 
+  const toggleUserSelection = (userId: number) => {
+    setSelectedUserIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(userId)) {
+        next.delete(userId);
+      } else {
+        next.add(userId);
+      }
+      return next;
+    });
+  };
+
   const exportRows = useMemo(
     () =>
       sortedRows.map((row, index) => {
@@ -265,7 +292,7 @@ export default function ActivityReportPage() {
 
       <div className="space-y-5">
         <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[220px_180px_240px_1fr_auto] xl:items-end">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[220px_170px_220px_minmax(180px,260px)_auto] xl:items-end">
             <div>
               <label className="mb-1 block text-xs text-gray-500 dark:text-gray-400">Tədris ili</label>
               <select
@@ -325,18 +352,18 @@ export default function ActivityReportPage() {
               />
             </div>
 
-            <div className="flex flex-col gap-2 sm:flex-row xl:flex-col">
+            <div className="flex flex-row items-center gap-2">
               <button
                 onClick={handleExport}
                 disabled={!academicYear || rows.length === 0}
-                className="h-10 rounded-md bg-emerald-600 px-4 text-sm font-normal text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="h-10 whitespace-nowrap rounded-md bg-emerald-600 px-4 text-sm font-normal text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Excelə export
               </button>
               <button
                 onClick={() => setChartOpen(true)}
                 disabled={!academicYear || chartData.length === 0}
-                className="h-10 rounded-md border border-gray-300 bg-white px-4 text-sm font-normal text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+                className="h-10 whitespace-nowrap rounded-md border border-gray-300 bg-white px-4 text-sm font-normal text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
               >
                 Diagramla göstər
               </button>
@@ -439,7 +466,16 @@ export default function ActivityReportPage() {
                           {index + 1}
                         </td>
                         <td className="sticky left-[52px] z-10 border-r border-gray-100 bg-white px-2 py-1.5 text-gray-800 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
-                          <span className="block truncate">{row.full_name || "—"}</span>
+                          <div className="flex min-w-0 items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={selectedUserIds.has(Number(row.user_id))}
+                              onChange={() => toggleUserSelection(Number(row.user_id))}
+                              className="h-4 w-4 shrink-0 rounded border-gray-300 text-brand-500 focus:ring-brand-500"
+                              aria-label={`${row.full_name || "Şəxs"} diagram üçün seç`}
+                            />
+                            <span className="block min-w-0 truncate">{row.full_name || "—"}</span>
+                          </div>
                         </td>
                         <td className="border-r border-gray-100 px-2 py-1.5 text-gray-600 dark:border-gray-800 dark:text-gray-400">
                           <span className="block truncate">{row.department_name || "—"}</span>
@@ -470,6 +506,11 @@ export default function ActivityReportPage() {
           <h3 className="mb-4 text-base font-medium text-gray-900 dark:text-white">
             Fəaliyyətlər üzrə orta ballar
           </h3>
+          {selectedUserIds.size > 0 && (
+            <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
+              Diagram {selectedUserIds.size} seçilmiş şəxs üzrə göstərilir.
+            </p>
+          )}
           {chartData.length === 0 ? (
             <p className="py-10 text-center text-sm text-gray-500 dark:text-gray-400">
               Diagram üçün məlumat tapılmadı.
