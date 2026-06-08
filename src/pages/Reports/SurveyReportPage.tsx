@@ -4,8 +4,12 @@ import Chart from "react-apexcharts";
 import ApexCharts, { ApexOptions } from "apexcharts";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
+import DepartmentTabbedCombobox, {
+  DepartmentFilterSelection,
+} from "../../components/reports/DepartmentTabbedCombobox";
 import { Modal } from "../../components/ui/modal";
 import departmentService, { Department } from "../../services/departmentService";
+import facultyService, { Faculty } from "../../services/facultyService";
 import helperToolService, { HelperToolOption } from "../../services/helperToolService";
 import reportService, {
   SurveyQuestionReportQuestion,
@@ -57,10 +61,11 @@ export default function SurveyReportPage() {
   const [academicYears, setAcademicYears] = useState<HelperToolOption[]>([]);
   const [semesters, setSemesters] = useState<HelperToolOption[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [faculties, setFaculties] = useState<Faculty[]>([]);
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [academicYear, setAcademicYear] = useState("");
   const [semester, setSemester] = useState("");
-  const [departmentId, setDepartmentId] = useState("");
+  const [departmentFilter, setDepartmentFilter] = useState<DepartmentFilterSelection[]>([]);
   const [surveyId, setSurveyId] = useState("");
   const [search, setSearch] = useState("");
   const [questions, setQuestions] = useState<SurveyQuestionReportQuestion[]>([]);
@@ -79,16 +84,18 @@ export default function SurveyReportPage() {
     const loadOptions = async () => {
       try {
         setLoadingOptions(true);
-        const [yearsRes, semestersRes, departmentsRes, surveysRes] = await Promise.all([
+        const [yearsRes, semestersRes, departmentsRes, facultiesRes, surveysRes] = await Promise.all([
           helperToolService.getAcademicYears(),
           helperToolService.getSemesters(),
           departmentService.getAll(),
+          facultyService.getAll(),
           surveyService.getAll(),
         ]);
 
         setAcademicYears(Array.isArray(yearsRes.data) ? yearsRes.data : []);
         setSemesters(Array.isArray(semestersRes.data) ? semestersRes.data : []);
         setDepartments(Array.isArray(departmentsRes.data) ? departmentsRes.data : []);
+        setFaculties(Array.isArray(facultiesRes.data) ? facultiesRes.data : []);
         setSurveys(Array.isArray(surveysRes.data) ? surveysRes.data : []);
       } catch {
         setError("Filter məlumatları yüklənmədi");
@@ -114,7 +121,9 @@ export default function SurveyReportPage() {
         const response = await reportService.getSurveyQuestionReport({
           academic_year: academicYear,
           semester,
-          department_id: departmentId,
+          department_ids: Array.from(
+            new Set(departmentFilter.flatMap((selection) => selection.departmentIds))
+          ).join(","),
           survey_id: surveyId,
           search,
         });
@@ -130,7 +139,7 @@ export default function SurveyReportPage() {
     }, 250);
 
     return () => window.clearTimeout(timeoutId);
-  }, [academicYear, semester, departmentId, surveyId, search]);
+  }, [academicYear, semester, departmentFilter, surveyId, search]);
 
   useEffect(() => {
     setSelectedUserIds((prev) => {
@@ -413,18 +422,13 @@ export default function SurveyReportPage() {
 
             <div>
               <label className="mb-1 block text-xs text-gray-500 dark:text-gray-400">Departament</label>
-              <select
-                value={departmentId}
-                onChange={(event) => setDepartmentId(event.target.value)}
-                className="h-10 w-full rounded-md border border-gray-300 px-3 text-sm outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-              >
-                <option value="">Bütün departamentlər</option>
-                {departments.map((department) => (
-                  <option key={department.id} value={department.id}>
-                    {department.name}
-                  </option>
-                ))}
-              </select>
+              <DepartmentTabbedCombobox
+                departments={departments}
+                faculties={faculties}
+                value={departmentFilter}
+                onChange={setDepartmentFilter}
+                disabled={loadingOptions}
+              />
             </div>
 
             <div>

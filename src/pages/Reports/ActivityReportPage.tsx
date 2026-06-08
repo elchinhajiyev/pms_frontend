@@ -4,8 +4,12 @@ import Chart from "react-apexcharts";
 import ApexCharts, { ApexOptions } from "apexcharts";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
+import DepartmentTabbedCombobox, {
+  DepartmentFilterSelection,
+} from "../../components/reports/DepartmentTabbedCombobox";
 import { Modal } from "../../components/ui/modal";
 import departmentService, { Department } from "../../services/departmentService";
+import facultyService, { Faculty } from "../../services/facultyService";
 import helperToolService, { HelperToolOption } from "../../services/helperToolService";
 import reportService, {
   ActivityReportActivity,
@@ -36,9 +40,10 @@ export default function ActivityReportPage() {
   const [academicYears, setAcademicYears] = useState<HelperToolOption[]>([]);
   const [semesters, setSemesters] = useState<HelperToolOption[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [faculties, setFaculties] = useState<Faculty[]>([]);
   const [academicYear, setAcademicYear] = useState("");
   const [semester, setSemester] = useState("");
-  const [departmentId, setDepartmentId] = useState("");
+  const [departmentFilter, setDepartmentFilter] = useState<DepartmentFilterSelection[]>([]);
   const [search, setSearch] = useState("");
   const [activities, setActivities] = useState<ActivityReportActivity[]>([]);
   const [rows, setRows] = useState<ActivityReportRow[]>([]);
@@ -56,15 +61,17 @@ export default function ActivityReportPage() {
     const loadOptions = async () => {
       try {
         setLoadingOptions(true);
-        const [yearsRes, semestersRes, departmentsRes] = await Promise.all([
+        const [yearsRes, semestersRes, departmentsRes, facultiesRes] = await Promise.all([
           helperToolService.getAcademicYears(),
           helperToolService.getSemesters(),
           departmentService.getAll(),
+          facultyService.getAll(),
         ]);
 
         setAcademicYears(Array.isArray(yearsRes.data) ? yearsRes.data : []);
         setSemesters(Array.isArray(semestersRes.data) ? semestersRes.data : []);
         setDepartments(Array.isArray(departmentsRes.data) ? departmentsRes.data : []);
+        setFaculties(Array.isArray(facultiesRes.data) ? facultiesRes.data : []);
       } catch {
         setError("Filter məlumatları yüklənmədi");
       } finally {
@@ -89,7 +96,9 @@ export default function ActivityReportPage() {
         const response = await reportService.getActivityReport({
           academic_year: academicYear,
           semester,
-          department_id: departmentId,
+          department_ids: Array.from(
+            new Set(departmentFilter.flatMap((selection) => selection.departmentIds))
+          ).join(","),
           search,
         });
         setActivities(Array.isArray(response.activities) ? response.activities : []);
@@ -104,7 +113,7 @@ export default function ActivityReportPage() {
     }, 250);
 
     return () => window.clearTimeout(timeoutId);
-  }, [academicYear, semester, departmentId, search]);
+  }, [academicYear, semester, departmentFilter, search]);
 
   useEffect(() => {
     setSelectedUserIds((prev) => {
@@ -359,18 +368,13 @@ export default function ActivityReportPage() {
 
             <div>
               <label className="mb-1 block text-xs text-gray-500 dark:text-gray-400">Departament</label>
-              <select
-                value={departmentId}
-                onChange={(event) => setDepartmentId(event.target.value)}
-                className="h-10 w-full rounded-md border border-gray-300 px-3 text-sm outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-              >
-                <option value="">Bütün departamentlər</option>
-                {departments.map((department) => (
-                  <option key={department.id} value={department.id}>
-                    {department.name}
-                  </option>
-                ))}
-              </select>
+              <DepartmentTabbedCombobox
+                departments={departments}
+                faculties={faculties}
+                value={departmentFilter}
+                onChange={setDepartmentFilter}
+                disabled={loadingOptions}
+              />
             </div>
 
             <div>
