@@ -1,12 +1,20 @@
 import { useEffect, useState } from "react";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
+import { MultiCombobox } from "../../components/ui/combobox";
+import departmentService, { Department } from "../../services/departmentService";
 import facultyService, { Faculty } from "../../services/facultyService";
 
-const emptyForm = { name: "" };
+const emptyForm = { name: "", department_ids: [] as number[] };
+
+const isKafedraDepartment = (department: Department) =>
+  (department.categories || []).some(
+    (category) => category.name.trim().toLowerCase() === "kafedra"
+  );
 
 export default function FacultiesList() {
   const [faculties, setFaculties] = useState<Faculty[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -19,8 +27,12 @@ export default function FacultiesList() {
   const load = async () => {
     try {
       setLoading(true);
-      const res = await facultyService.getAll();
-      setFaculties(res.data || []);
+      const [facultyRes, departmentRes] = await Promise.all([
+        facultyService.getAll(),
+        departmentService.getAll(),
+      ]);
+      setFaculties(facultyRes.data || []);
+      setDepartments(departmentRes.data || []);
     } catch {
       setError("Fakültələr yüklənmədi");
     } finally {
@@ -41,7 +53,10 @@ export default function FacultiesList() {
 
   const openEdit = (faculty: Faculty) => {
     setEditId(faculty.id);
-    setForm({ name: faculty.name });
+    setForm({
+      name: faculty.name,
+      department_ids: faculty.department_ids || [],
+    });
     setFormError("");
     setShowModal(true);
   };
@@ -55,10 +70,15 @@ export default function FacultiesList() {
     setSaving(true);
     setFormError("");
     try {
+      const payload = {
+        name: form.name.trim(),
+        department_ids: form.department_ids,
+      };
+
       if (editId) {
-        await facultyService.update(editId, { name: form.name.trim() });
+        await facultyService.update(editId, payload);
       } else {
-        await facultyService.create({ name: form.name.trim() });
+        await facultyService.create(payload);
       }
       setShowModal(false);
       await load();
@@ -68,6 +88,8 @@ export default function FacultiesList() {
       setSaving(false);
     }
   };
+
+  const kafedraDepartments = departments.filter(isKafedraDepartment);
 
   const handleDelete = async (id: number) => {
     if (!confirm("Bu fakültəni silmək istəyirsiniz?")) return;
@@ -116,6 +138,7 @@ export default function FacultiesList() {
               <thead>
                 <tr className="border-b border-gray-200 text-left text-gray-600 dark:border-gray-700 dark:text-gray-400">
                   <th className="pb-3 pr-4 font-medium">Fakültə adı</th>
+                  <th className="pb-3 pr-4 font-medium">Kafedralar</th>
                   <th className="pb-3 font-medium"></th>
                 </tr>
               </thead>
@@ -123,6 +146,11 @@ export default function FacultiesList() {
                 {faculties.map((faculty) => (
                   <tr key={faculty.id} className="border-b border-gray-100 dark:border-gray-700">
                     <td className="py-3 pr-4 text-gray-800 dark:text-white">{faculty.name}</td>
+                    <td className="py-3 pr-4 text-gray-600 dark:text-gray-300">
+                      {faculty.departments && faculty.departments.length > 0
+                        ? faculty.departments.map((department) => department.name).join(", ")
+                        : "-"}
+                    </td>
                     <td className="py-3">
                       <div className="flex gap-3">
                         <button onClick={() => openEdit(faculty)} className="text-gray-500 hover:text-brand-500 dark:text-gray-400">Redaktə</button>
@@ -152,9 +180,28 @@ export default function FacultiesList() {
                 <input
                   type="text"
                   value={form.name}
-                  onChange={(e) => setForm({ name: e.target.value })}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
                   placeholder="Məsələn: Mühəndislik"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Kafedralar
+                </label>
+                <MultiCombobox
+                  options={kafedraDepartments.map((department) => ({
+                    label: department.name,
+                    value: department.id,
+                  }))}
+                  selectedValues={form.department_ids}
+                  onChange={(departmentIds) =>
+                    setForm({ ...form, department_ids: departmentIds })
+                  }
+                  placeholder="Kafedra seçin..."
+                  searchPlaceholder="Kafedra axtar..."
+                  emptyText="Kafedra kateqoriyalı departament tapılmadı"
                 />
               </div>
 
