@@ -5,6 +5,7 @@ import { Faculty } from "../../services/facultyService";
 type TabId = "faculties" | "kafedra" | "other";
 
 export interface DepartmentFilterSelection {
+  id: string;
   label: string;
   departmentIds: number[];
 }
@@ -12,8 +13,8 @@ export interface DepartmentFilterSelection {
 interface DepartmentTabbedComboboxProps {
   departments: Department[];
   faculties: Faculty[];
-  value: DepartmentFilterSelection | null;
-  onChange: (selection: DepartmentFilterSelection | null) => void;
+  value: DepartmentFilterSelection[];
+  onChange: (selection: DepartmentFilterSelection[]) => void;
   disabled?: boolean;
 }
 
@@ -103,6 +104,21 @@ export default function DepartmentTabbedCombobox({
     other: otherItems.length,
   };
 
+  const selectedDepartmentIds = useMemo(
+    () =>
+      Array.from(
+        new Set(value.flatMap((selection) => selection.departmentIds))
+      ),
+    [value]
+  );
+
+  const buttonLabel =
+    value.length === 0
+      ? "Bütün departamentlər"
+      : value.length === 1
+        ? value[0].label
+        : `${value.length} seçim`;
+
   useEffect(() => {
     if (!open) return;
 
@@ -124,9 +140,32 @@ export default function DepartmentTabbedCombobox({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const selectDepartments = (selection: DepartmentFilterSelection) => {
-    onChange(selection);
-    setOpen(false);
+  const toggleSelection = (selection: DepartmentFilterSelection) => {
+    const exists = value.some((item) => item.id === selection.id);
+    if (exists) {
+      onChange(value.filter((item) => item.id !== selection.id));
+      return;
+    }
+
+    onChange([...value, selection]);
+  };
+
+  const removeSelection = (selectionId: string) => {
+    onChange(value.filter((item) => item.id !== selectionId));
+  };
+
+  const isSelected = (selectionId: string) =>
+    value.some((item) => item.id === selectionId);
+
+  const isDepartmentCovered = (departmentId: number) =>
+    selectedDepartmentIds.includes(departmentId);
+
+  const isFacultyCovered = (departmentIds: number[]) =>
+    departmentIds.length > 0 &&
+    departmentIds.every((departmentId) => selectedDepartmentIds.includes(departmentId));
+
+  const clearSelection = () => {
+    onChange([]);
   };
 
   return (
@@ -137,8 +176,8 @@ export default function DepartmentTabbedCombobox({
         onClick={() => setOpen((current) => !current)}
         className="flex h-10 w-full items-center justify-between gap-2 rounded-md border border-gray-300 bg-white px-3 text-left text-sm outline-none transition hover:bg-gray-50 focus:border-brand-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700"
       >
-        <span className={value ? "truncate text-gray-800 dark:text-white" : "truncate text-gray-500 dark:text-gray-400"}>
-          {value?.label || "Bütün departamentlər"}
+        <span className={value.length > 0 ? "truncate text-gray-800 dark:text-white" : "truncate text-gray-500 dark:text-gray-400"}>
+          {buttonLabel}
         </span>
         <svg
           className={`h-4 w-4 shrink-0 text-gray-500 transition-transform ${
@@ -151,6 +190,27 @@ export default function DepartmentTabbedCombobox({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m6 9 6 6 6-6" />
         </svg>
       </button>
+
+      {value.length > 0 && (
+        <div className="mt-2 flex max-h-20 flex-wrap gap-2 overflow-y-auto rounded-md border border-gray-200 p-2 dark:border-gray-700">
+          {value.map((selection) => (
+            <span
+              key={selection.id}
+              className="inline-flex max-w-full items-center gap-1 rounded-full bg-brand-50 px-2 py-1 text-xs font-medium text-brand-700 dark:bg-brand-900/40 dark:text-brand-200"
+            >
+              <span className="truncate">{selection.label}</span>
+              <button
+                type="button"
+                onClick={() => removeSelection(selection.id)}
+                className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full hover:bg-brand-100 dark:hover:bg-brand-800"
+                aria-label={`${selection.label} sil`}
+              >
+                x
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
 
       {open && !disabled && (
         <div className="absolute left-0 right-0 top-full z-50 mt-1 min-w-[360px] rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900">
@@ -188,13 +248,12 @@ export default function DepartmentTabbedCombobox({
             <button
               type="button"
               onClick={() => {
-                onChange(null);
-                setOpen(false);
+                clearSelection();
               }}
               className="flex w-full items-center justify-between px-3 py-2 text-left text-sm text-gray-800 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800"
             >
               Bütün departamentlər
-              {!value && <span className="text-brand-600">✓</span>}
+              {value.length === 0 && <span className="text-brand-600">✓</span>}
             </button>
 
             {activeTab === "faculties" &&
@@ -207,16 +266,30 @@ export default function DepartmentTabbedCombobox({
                     type="button"
                     disabled={faculty.departmentIds.length === 0}
                     onClick={() =>
-                      selectDepartments({
+                      toggleSelection({
+                        id: `faculty:${faculty.id}`,
                         label: `Fakültə: ${faculty.label}`,
                         departmentIds: faculty.departmentIds,
                       })
                     }
-                    className="w-full px-3 py-2 text-left text-sm text-gray-800 hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-200 dark:hover:bg-brand-900/30"
+                    className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-brand-900/30 ${
+                      isSelected(`faculty:${faculty.id}`) || isFacultyCovered(faculty.departmentIds)
+                        ? "text-brand-700 dark:text-brand-200"
+                        : "text-gray-800 dark:text-gray-200"
+                    }`}
                   >
-                    <span className="block truncate">{faculty.label}</span>
-                    <span className="block truncate text-xs text-gray-500 dark:text-gray-400">
-                      {faculty.departmentIds.length} departament
+                    <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-gray-300 dark:border-gray-600">
+                      {(isSelected(`faculty:${faculty.id}`) || isFacultyCovered(faculty.departmentIds)) && (
+                        <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="m5 13 4 4L19 7" />
+                        </svg>
+                      )}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate">{faculty.label}</span>
+                      <span className="block truncate text-xs text-gray-500 dark:text-gray-400">
+                        {faculty.departmentIds.length} departament
+                      </span>
                     </span>
                   </button>
                 ))
@@ -231,14 +304,26 @@ export default function DepartmentTabbedCombobox({
                     key={department.id}
                     type="button"
                     onClick={() =>
-                      selectDepartments({
+                      toggleSelection({
+                        id: `department:${department.id}`,
                         label: department.name,
                         departmentIds: [department.id],
                       })
                     }
-                    className="w-full px-3 py-2 text-left text-sm text-gray-800 hover:bg-brand-50 dark:text-gray-200 dark:hover:bg-brand-900/30"
+                    className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-brand-50 dark:hover:bg-brand-900/30 ${
+                      isSelected(`department:${department.id}`) || isDepartmentCovered(department.id)
+                        ? "text-brand-700 dark:text-brand-200"
+                        : "text-gray-800 dark:text-gray-200"
+                    }`}
                   >
-                    {department.name}
+                    <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-gray-300 dark:border-gray-600">
+                      {(isSelected(`department:${department.id}`) || isDepartmentCovered(department.id)) && (
+                        <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="m5 13 4 4L19 7" />
+                        </svg>
+                      )}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate">{department.name}</span>
                   </button>
                 ))
               ))}
@@ -252,14 +337,26 @@ export default function DepartmentTabbedCombobox({
                     key={department.id}
                     type="button"
                     onClick={() =>
-                      selectDepartments({
+                      toggleSelection({
+                        id: `department:${department.id}`,
                         label: department.name,
                         departmentIds: [department.id],
                       })
                     }
-                    className="w-full px-3 py-2 text-left text-sm text-gray-800 hover:bg-brand-50 dark:text-gray-200 dark:hover:bg-brand-900/30"
+                    className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-brand-50 dark:hover:bg-brand-900/30 ${
+                      isSelected(`department:${department.id}`) || isDepartmentCovered(department.id)
+                        ? "text-brand-700 dark:text-brand-200"
+                        : "text-gray-800 dark:text-gray-200"
+                    }`}
                   >
-                    {department.name}
+                    <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-gray-300 dark:border-gray-600">
+                      {(isSelected(`department:${department.id}`) || isDepartmentCovered(department.id)) && (
+                        <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="m5 13 4 4L19 7" />
+                        </svg>
+                      )}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate">{department.name}</span>
                   </button>
                 ))
               ))}

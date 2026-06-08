@@ -31,7 +31,7 @@ export default function GeneralReportPage() {
   const [faculties, setFaculties] = useState<Faculty[]>([]);
   const [academicYear, setAcademicYear] = useState("");
   const [semester, setSemester] = useState("");
-  const [departmentFilter, setDepartmentFilter] = useState<DepartmentFilterSelection | null>(null);
+  const [departmentFilter, setDepartmentFilter] = useState<DepartmentFilterSelection[]>([]);
   const [search, setSearch] = useState("");
   const [rows, setRows] = useState<GeneralReportRow[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(true);
@@ -76,7 +76,9 @@ export default function GeneralReportPage() {
         const response = await reportService.getGeneralReport({
           academic_year: academicYear,
           semester,
-          department_ids: departmentFilter?.departmentIds.join(","),
+          department_ids: Array.from(
+            new Set(departmentFilter.flatMap((selection) => selection.departmentIds))
+          ).join(","),
           search,
         });
         setRows(Array.isArray(response.data) ? response.data : []);
