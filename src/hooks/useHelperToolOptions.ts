@@ -60,3 +60,14 @@ export const useHelperToolOptions = () => {
 
   return { academicYears, semesters }
 }
+
+export const useEnsureActiveSemester = <T extends string>(
+  semesters: string[],
+  semester: T,
+  setSemester: (semester: T) => void
+) => {
+  useEffect(() => {
+    if (semesters.length === 0 || semesters.includes(semester)) return
+    setSemester(semesters[0] as T)
+  }, [semesters, semester, setSemester])
+}

@@ -19,6 +19,7 @@ export interface GeneralReportParams {
   semester?: string
   search?: string
   department_id?: number | string
+  department_ids?: string
   survey_id?: number | string
 }
 

@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
 import { useAuth } from "../../context/AuthContext";
+import { useEnsureActiveSemester, useHelperToolOptions } from "../../hooks/useHelperToolOptions";
 import { evaluationParameterService, EvaluationParameter } from "../../services/evaluationService";
 import teachingProgramService from "../../services/teachingProgramService";
 import SelectedFilePreview from "../../components/form/SelectedFilePreview";
@@ -14,6 +15,7 @@ export default function CreateTextbookPage() {
   const recordId = Number(id);
   const isEditMode = Number.isFinite(recordId);
   const { user } = useAuth();
+  const { semesters } = useHelperToolOptions();
 
   const [title, setTitle] = useState("");
   const [semester, setSemester] = useState<"YAZ" | "YAY" | "PAYIZ">("YAZ");
@@ -31,6 +33,8 @@ export default function CreateTextbookPage() {
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  useEnsureActiveSemester(semesters, semester, setSemester);
 
   const academicYearOptions = useMemo(() => {
     const currentYear = new Date().getFullYear();
@@ -208,9 +212,11 @@ export default function CreateTextbookPage() {
                 onChange={(e) => setSemester(e.target.value as "YAZ" | "YAY" | "PAYIZ")}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
               >
-                <option value="YAZ">Yaz</option>
-                <option value="YAY">Yay</option>
-                <option value="PAYIZ">Payız</option>
+                {semesters.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
               </select>
             </div>
 

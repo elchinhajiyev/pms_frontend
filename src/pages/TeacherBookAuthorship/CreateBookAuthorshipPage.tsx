@@ -6,7 +6,7 @@ import PageMeta from "../../components/common/PageMeta";
 import { useAuth } from "../../context/AuthContext";
 import { evaluationParameterService, EvaluationParameter } from "../../services/evaluationService";
 import bookAuthorshipService from "../../services/bookAuthorshipService";
-import { useHelperToolOptions } from "../../hooks/useHelperToolOptions";
+import { useEnsureActiveSemester, useHelperToolOptions } from "../../hooks/useHelperToolOptions";
 import SelectedFilePreview from "../../components/form/SelectedFilePreview";
 
 export default function CreateBookAuthorshipPage() {
@@ -33,6 +33,8 @@ export default function CreateBookAuthorshipPage() {
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  useEnsureActiveSemester(semesters, semester, setSemester);
 
   const loadCategories = async () => {
     if (categoriesLoaded || loadingCategories) return;

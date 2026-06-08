@@ -2,7 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import * as XLSX from "xlsx";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
+import DepartmentTabbedCombobox, {
+  DepartmentFilterSelection,
+} from "../../components/reports/DepartmentTabbedCombobox";
 import departmentService, { Department } from "../../services/departmentService";
+import facultyService, { Faculty } from "../../services/facultyService";
 import helperToolService, { HelperToolOption } from "../../services/helperToolService";
 import reportService, { GeneralReportRow } from "../../services/reportService";
 
@@ -24,9 +28,10 @@ export default function GeneralReportPage() {
   const [academicYears, setAcademicYears] = useState<HelperToolOption[]>([]);
   const [semesters, setSemesters] = useState<HelperToolOption[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [faculties, setFaculties] = useState<Faculty[]>([]);
   const [academicYear, setAcademicYear] = useState("");
   const [semester, setSemester] = useState("");
-  const [departmentId, setDepartmentId] = useState("");
+  const [departmentFilter, setDepartmentFilter] = useState<DepartmentFilterSelection | null>(null);
   const [search, setSearch] = useState("");
   const [rows, setRows] = useState<GeneralReportRow[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(true);
@@ -37,15 +42,17 @@ export default function GeneralReportPage() {
     const loadOptions = async () => {
       try {
         setLoadingOptions(true);
-        const [yearsRes, semestersRes, departmentsRes] = await Promise.all([
+        const [yearsRes, semestersRes, departmentsRes, facultiesRes] = await Promise.all([
           helperToolService.getAcademicYears(),
           helperToolService.getSemesters(),
           departmentService.getAll(),
+          facultyService.getAll(),
         ]);
 
         setAcademicYears(Array.isArray(yearsRes.data) ? yearsRes.data : []);
         setSemesters(Array.isArray(semestersRes.data) ? semestersRes.data : []);
         setDepartments(Array.isArray(departmentsRes.data) ? departmentsRes.data : []);
+        setFaculties(Array.isArray(facultiesRes.data) ? facultiesRes.data : []);
       } catch {
         setError("Filter məlumatları yüklənmədi");
       } finally {
@@ -69,7 +76,7 @@ export default function GeneralReportPage() {
         const response = await reportService.getGeneralReport({
           academic_year: academicYear,
           semester,
-          department_id: departmentId,
+          department_ids: departmentFilter?.departmentIds.join(","),
           search,
         });
         setRows(Array.isArray(response.data) ? response.data : []);
@@ -82,7 +89,7 @@ export default function GeneralReportPage() {
     }, 250);
 
     return () => window.clearTimeout(timeoutId);
-  }, [academicYear, semester, departmentId, search]);
+  }, [academicYear, semester, departmentFilter, search]);
 
   const exportRows = useMemo(
     () =>
@@ -119,7 +126,7 @@ export default function GeneralReportPage() {
 
       <div className="space-y-5">
         <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[220px_180px_240px_1fr_auto] xl:items-end">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[220px_180px_300px_1fr_auto] xl:items-end">
             <div>
               <label className="mb-1 block text-xs text-gray-500 dark:text-gray-400">Tədris ili</label>
               <select
@@ -155,18 +162,13 @@ export default function GeneralReportPage() {
 
             <div>
               <label className="mb-1 block text-xs text-gray-500 dark:text-gray-400">Departament</label>
-              <select
-                value={departmentId}
-                onChange={(event) => setDepartmentId(event.target.value)}
-                className="h-10 w-full rounded-md border border-gray-300 px-3 text-sm outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-              >
-                <option value="">Bütün departamentlər</option>
-                {departments.map((department) => (
-                  <option key={department.id} value={department.id}>
-                    {department.name}
-                  </option>
-                ))}
-              </select>
+              <DepartmentTabbedCombobox
+                departments={departments}
+                faculties={faculties}
+                value={departmentFilter}
+                onChange={setDepartmentFilter}
+                disabled={loadingOptions}
+              />
             </div>
 
             <div>

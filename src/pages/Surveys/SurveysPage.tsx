@@ -9,7 +9,7 @@ import surveyService, { Survey } from "../../services/surveyService";
 import surveyQuestionBankService, {
   SurveyQuestionBank,
 } from "../../services/surveyQuestionBankService";
-import { useHelperToolOptions } from "../../hooks/useHelperToolOptions";
+import { useEnsureActiveSemester, useHelperToolOptions } from "../../hooks/useHelperToolOptions";
 
 const ROWS_PER_PAGE = 20;
 
@@ -85,6 +85,8 @@ const SurveysPage: React.FC = () => {
   const [filterSemester, setFilterSemester] = useState("");
   const [filterGroupId, setFilterGroupId] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+
+  useEnsureActiveSemester(semesters, semester, setSemester);
 
   const initialAcademicYear =
     academicYears.find((item) => String(item || "").trim()) ||

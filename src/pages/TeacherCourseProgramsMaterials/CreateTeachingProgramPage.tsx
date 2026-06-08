@@ -6,7 +6,7 @@ import PageMeta from "../../components/common/PageMeta";
 import { useAuth } from "../../context/AuthContext";
 import { evaluationParameterService, EvaluationParameter } from "../../services/evaluationService";
 import teachingProgramService from "../../services/teachingProgramService";
-import { useHelperToolOptions } from "../../hooks/useHelperToolOptions";
+import { useEnsureActiveSemester, useHelperToolOptions } from "../../hooks/useHelperToolOptions";
 import SelectedFilePreview from "../../components/form/SelectedFilePreview";
 
 export default function CreateTeachingProgramPage() {
@@ -34,6 +34,8 @@ export default function CreateTeachingProgramPage() {
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  useEnsureActiveSemester(semesters, semester, setSemester);
 
   const loadCategories = async () => {
     if (categoriesLoaded || loadingCategories) return;
